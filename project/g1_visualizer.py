@@ -8,8 +8,7 @@ import mujoco.viewer
 
 from unitree_sdk2py.core.channel import ChannelFactoryInitialize
 
-from g1_header import const_pi
-from g1_subscribe import LowState
+from g1_subscribe import LowStateSubscriber
 
 #
 ##
@@ -66,8 +65,8 @@ class Visualizer():
     #
     ##
     def __init__(self,
-                 domain = 0,
-                 netface = "eno1",
+                 domain,
+                 netface,
                  path_scene = "scene/scene_29dof.xml",
                  enable_elastic_band = False,
                  simulate_dt = 0.005,
@@ -75,7 +74,7 @@ class Visualizer():
         #
         ##
         ChannelFactoryInitialize(domain, netface)
-        self.low_state = LowState()
+        self.low_state = LowStateSubscriber()
         #
         self.mujoco_model = mujoco.MjModel.from_xml_path(path_scene)
         self.mujoco_data = mujoco.MjData(self.mujoco_model)
@@ -161,5 +160,5 @@ class Visualizer():
 if __name__ == "__main__":
     #
     ##
-    visualizer = Visualizer()
+    visualizer = Visualizer(2, "lo")
     visualizer.start()

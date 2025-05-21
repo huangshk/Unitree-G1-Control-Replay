@@ -6,7 +6,7 @@ from g1_header import const_pi
 
 #
 ##
-class LowState:
+class LowStateSubscriber:
 
     #
     ##

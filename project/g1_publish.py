@@ -6,7 +6,7 @@ from unitree_sdk2py.utils.crc import CRC
 
 #
 ##
-class LowCmd:
+class LowCmdPublisher:
     #
     ##
     def __init__(self):
