@@ -71,7 +71,7 @@ class Controller:
 
             time.sleep(0.1)
 
-if __name__ == "__main__":#
+if __name__ == "__main__":
     #
     ##
     controller = Controller()
