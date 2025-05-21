@@ -11,10 +11,9 @@ class LowState:
     #
     ##
     def __init__(self):
-
-        self.subscriber = ChannelSubscriber("rt/lowstate", LowState_)
         #
         ##
+        self.subscriber = ChannelSubscriber("rt/lowstate", LowState_)
         self.subscriber.Init(self.default_handler, 10)
         #
         self.low_state = None
@@ -52,45 +51,45 @@ class HandState:
         if enable_state_l:
             #
             self.subscriber_state_l = ChannelSubscriber("rt/inspire_hand/state/l", state)
-            self.subscriber_state_l.Init(self.state_l_handler, 10)
+            self.subscriber_state_l.Init(self.handler_state_l, 10)
         #
         ##
         if enable_state_r:
             #
             self.subscriber_state_r = ChannelSubscriber("rt/inspire_hand/state/r", state)
-            self.subscriber_state_r.Init(self.state_r_handler, 10)
+            self.subscriber_state_r.Init(self.handler_state_r, 10)
         #
         ##
         if enable_touch_l:
             #
             self.subscriber_touch_l = ChannelSubscriber("rt/inspire_hand/touch/l", state)
-            self.subscriber_touch_l.Init(self.touch_l_handler, 10)
+            self.subscriber_touch_l.Init(self.handler_touch_l, 10)
 
         if enable_touch_r:
             #
             self.subscriber_touch_r = ChannelSubscriber("rt/inspire_hand/touch/r", state)
-            self.subscriber_touch_r.Init(self.touch_r_handler, 10)
+            self.subscriber_touch_r.Init(self.handler_touch_r, 10)
 
     #
     ##
-    def state_l_handler(self, hand_state_l: state):
+    def handler_state_l(self, hand_state_l: state):
         #
         self.hand_state_l = hand_state_l
 
     #
     ##
-    def state_r_handler(self, hand_state_r: state):
+    def handler_state_r(self, hand_state_r: state):
         #
         self.hand_state_r = hand_state_r
     
     #
     ##
-    def touch_l_handler(self, hand_touch_l: state):
+    def handler_touch_l(self, hand_touch_l: state):
         #
         self.hand_touch_l = hand_touch_l
 
     #
     ##
-    def touch_r_handler(self, hand_touch_r: state):
+    def handler_touch_r(self, hand_touch_r: state):
         #
         self.hand_touch_r = hand_touch_r

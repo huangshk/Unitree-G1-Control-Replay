@@ -105,6 +105,8 @@ class Visualizer():
 
         self.count_init = 0
 
+    #
+    ##
     def start(self):
 
         thread_viewer = threading.Thread(target = self.viewer_thread)
@@ -112,24 +114,6 @@ class Visualizer():
         
         thread_viewer.start()
         thread_simulate.start()
-
-    # def real2mujoco(self,
-    #                 motor_state):
-    #     #
-    #     ##
-    #     mujoco_data_ctrl = []
-    #     #
-    #     const_range = [88, 88, 88, 139, 50, 50,
-    #                    88, 88, 88, 139, 50, 50,
-    #                    88, 50, 50,
-    #                    25, 25, 25, 25, 25, 5, 5,
-    #                    25, 25, 25, 25, 25, 5, 5]
-    #     #
-    #     for var_state, var_range in zip(motor_state, const_range):
-    #         #
-    #         mujoco_data_ctrl.append(var_state.q / const_pi * var_range)
-    #     #
-    #     return mujoco_data_ctrl
 
     #
     ##
@@ -142,60 +126,22 @@ class Visualizer():
             if self.enable_elastic_band:
                 self.mujoco_data.xfrc_applied[self.band_attached_link, :3] = self.elastic_band.advance(
                     self.mujoco_data.qpos[:3], self.mujoco_data.qvel[:3])
-            
-            # low_state = self.low_state.low_state
-            # if self.mujoco_data != None:
-            #     for motor_i in range(self.mujoco_model.nu):
-
-            #         self.mujoco_data.ctrl[motor_i] = (
-            #         low_state.motor_state[motor_i].tau
-            #         + low_state.motor_state[motor_i].kp
-            #         * (low_state.motor_state[motor_i].q - self.mujoco_data.sensordata[motor_i])
-            #         + low_state.motor_state[motor_i].kd
-            #         * (
-            #             low_state.motor_state[motor_i].dq
-            #             - self.mujoco_data.sensordata[motor_i + self.mujoco_model.nu]
-            #         )
-            #     )
-
-            # print(self.mujoco_data)
-            # print(self.mujoco_data.body)
-            # print(len(self.low_state.low_state.motor_state))
-            # self.mujoco_data.qacc = 0
-            # self.mujoco_data.qvel = 0
-            
+            #
+            ##
             if self.count_init > 10:
                 self.mujoco_data.qvel = 0
                 self.mujoco_data.qpos = self.mujoco_qpos_latest
 
                 for joint_i in range(29):
                 
-                # if joint_i != 25: continue
-                # print(self.low_state.low_state.motor_state[joint_i].q)
                     self.mujoco_data.qpos[joint_i + 7] = self.low_state.low_state.motor_state[joint_i].q
             else:
+
                 self.count_init += 1
                 self.mujoco_qpos_latest = self.mujoco_data.qpos.copy()
 
-            # real_q_array = np.array([var.q for var in self.low_state.low_state.motor_state[0:29]])
-
-            # print(self.mujoco_data.qpos[7:].shape)
-
-            # print(type(self.mujoco_data.qpos))
             mujoco.mj_step(self.mujoco_model, self.mujoco_data)
-            # print(self.mujoco_data.sensordata.shape)
-            # print(self.mujoco_model.nu)
             
-            # print(low_state.motor_state[22].q/ const_pi * 180)
-
-            # self.mujoco_data.ctrl[0:21] = 0
-            # self.mujoco_data.ctrl[23:] = 0
-            # self.mujoco_data.ctrl[22] = low_state.motor_state[22].q/ const_pi * 180 *25/180
-            # self.mujoco_data.ctrl = self.real2mujoco(low_state.motor_state)
-            # print(self.mujoco_data.qpos[-5:-1])
-            # print(self.mujoco_data.qpos[:10])
-
-
             self.thread_lock.release()
             
             time.sleep(self.simulate_dt)
