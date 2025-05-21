@@ -160,5 +160,5 @@ class Visualizer():
 if __name__ == "__main__":
     #
     ##
-    visualizer = Visualizer(2, "lo")
+    visualizer = Visualizer(0, "eno1")
     visualizer.start()

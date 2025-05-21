@@ -4,6 +4,9 @@ from tkinter import ttk
 import threading
 from unitree_sdk2py.core.channel import ChannelFactoryInitialize
 from unitree_sdk2py.idl.default import unitree_hg_msg_dds__LowCmd_
+from unitree_sdk2py.comm.motion_switcher.motion_switcher_client import MotionSwitcherClient
+
+from unitree_sdk2py.utils.thread import RecurrentThread
 
 from g1_header import *
 from g1_subscribe import LowStateSubscriber
@@ -20,7 +23,7 @@ class Controller:
                  netface,
                  control_range = 1000.0,
                  monitor_dt = 0.1,
-                 control_dt = 0.01):
+                 control_dt = 0.001):
         #
         ##
         ChannelFactoryInitialize(domain, netface)
@@ -35,6 +38,7 @@ class Controller:
         #
         self.motor_list = [motor_id for (motor_id, _) in G1Joint.__dict__.items() if motor_id[0] != "_"]
         self.motor_state_initial = self.low_state_sub.low_state.motor_state
+        self.mode_machine = self.low_state_sub.low_state.mode_machine
         #
         ##
         self.motor_scale = {}
@@ -82,6 +86,10 @@ class Controller:
         self.thread_monitor = threading.Thread(target = self.monitor_thread)
         self.thread_control = threading.Thread(target = self.control_thread)
 
+        # self.thread_control = RecurrentThread(
+        #     interval=self.control_dt, target=self.control_thread, name="control"
+        # )
+
     #
     ##
     def monitor_thread(self):
@@ -108,18 +116,18 @@ class Controller:
         while True:
             #
             ##
-            motor_state = self.low_state.low_state.motor_state
-            #
             for var_i, motor_id in enumerate(self.motor_list):
                 #
                 if var_i > 28: break
                     #
-                low_cmd_q = self.motor_state_initial[var_i].q  +  self.motor_scale[motor_id].get() / self.control_range * ConstPi
+                low_cmd_q = self.motor_state_initial[var_i].q  + self.motor_scale[motor_id].get() / self.control_range * ConstPi
                
                 if low_cmd_q > ConstPi: low_cmd_q = ConstPi
                 if low_cmd_q < -ConstPi: low_cmd_q = -ConstPi
                     
                 self.low_cmd.mode_pr = 0
+                self.low_cmd.mode_machine = self.mode_machine
+                self.low_cmd.motor_cmd[var_i].mode = 1
                 self.low_cmd.motor_cmd[var_i].dq = 0
                 self.low_cmd.motor_cmd[var_i].kp = 60
                 self.low_cmd.motor_cmd[var_i].kd = 1.5
@@ -128,7 +136,8 @@ class Controller:
 
                 # if self.motor_scale[motor_id].get() / self.control_range * ConstPi != 0:
                 #     print("hhh")
-                # print(self.motor_scale[28].get() / self.control_range)
+            # print(self.motor_scale["RightWristYaw"].get() / self.control_range)
+            # print(self.low_cmd.motor_cmd[28].q)
             #
             self.low_cmd_pub.publish(self.low_cmd)
                 
@@ -140,6 +149,17 @@ class Controller:
     def start(self):
         #
         ##
+        # self.msc = MotionSwitcherClient()
+        # self.msc.SetTimeout(5.0)
+        # self.msc.Init()
+
+        # status, result = self.msc.CheckMode()
+        # while result['name']:
+        #     self.msc.ReleaseMode()
+        #     status, result = self.msc.CheckMode()
+        #     time.sleep(1)
+
+
         self.thread_monitor.start()
         self.thread_control.start()
         self.controller.mainloop()
@@ -148,6 +168,6 @@ class Controller:
 if __name__ == "__main__":
     #
     ##
-    controller = Controller(2, "lo")
+    controller = Controller(0, "eno1")
     controller.start()
 
