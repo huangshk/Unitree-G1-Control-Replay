@@ -86,10 +86,6 @@ class Controller:
         self.thread_monitor = threading.Thread(target = self.monitor_thread)
         self.thread_control = threading.Thread(target = self.control_thread)
 
-        # self.thread_control = RecurrentThread(
-        #     interval=self.control_dt, target=self.control_thread, name="control"
-        # )
-
     #
     ##
     def monitor_thread(self):
