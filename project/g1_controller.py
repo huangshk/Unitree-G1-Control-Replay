@@ -6,8 +6,6 @@ from unitree_sdk2py.core.channel import ChannelFactoryInitialize
 from unitree_sdk2py.idl.default import unitree_hg_msg_dds__LowCmd_
 from unitree_sdk2py.comm.motion_switcher.motion_switcher_client import MotionSwitcherClient
 
-from unitree_sdk2py.utils.thread import RecurrentThread
-
 from g1_header import *
 from g1_subscribe import LowStateSubscriber
 from g1_publish import LowCmdPublisher
@@ -45,7 +43,7 @@ class Controller:
         self.motor_state_q = {}
         #
         ##
-        self.controller = tkinter.Tk(className = " G1 Controller ")
+        self.controller = tkinter.Tk(className = " Imperial AESE G1 Panel ")
         self.frame = ttk.Frame(self.controller, padding = 20)
         self.frame.grid()
         #
@@ -115,12 +113,12 @@ class Controller:
             for var_i, motor_id in enumerate(self.motor_list):
                 #
                 if var_i > 28: break
-                    #
+                #
                 low_cmd_q = self.motor_state_initial[var_i].q  + self.motor_scale[motor_id].get() / self.control_range * ConstPi
-               
+
                 if low_cmd_q > ConstPi: low_cmd_q = ConstPi
                 if low_cmd_q < -ConstPi: low_cmd_q = -ConstPi
-                    
+                #
                 self.low_cmd.mode_pr = 0
                 self.low_cmd.mode_machine = self.mode_machine
                 self.low_cmd.motor_cmd[var_i].mode = 1
@@ -129,11 +127,6 @@ class Controller:
                 self.low_cmd.motor_cmd[var_i].kd = 1.5
                 self.low_cmd.motor_cmd[var_i].q = low_cmd_q
                 self.low_cmd.motor_cmd[var_i].tau = 0
-
-                # if self.motor_scale[motor_id].get() / self.control_range * ConstPi != 0:
-                #     print("hhh")
-            # print(self.motor_scale["RightWristYaw"].get() / self.control_range)
-            # print(self.low_cmd.motor_cmd[28].q)
             #
             self.low_cmd_pub.publish(self.low_cmd)
                 
@@ -145,17 +138,6 @@ class Controller:
     def start(self):
         #
         ##
-        # self.msc = MotionSwitcherClient()
-        # self.msc.SetTimeout(5.0)
-        # self.msc.Init()
-
-        # status, result = self.msc.CheckMode()
-        # while result['name']:
-        #     self.msc.ReleaseMode()
-        #     status, result = self.msc.CheckMode()
-        #     time.sleep(1)
-
-
         self.thread_monitor.start()
         self.thread_control.start()
         self.controller.mainloop()
