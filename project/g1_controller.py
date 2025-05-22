@@ -114,7 +114,7 @@ class Controller:
                 #
                 if var_i > 28: break
                 #
-                low_cmd_q = self.motor_state_initial[var_i].q  + self.motor_scale[motor_id].get() / self.control_range * ConstPi
+                low_cmd_q = self.motor_state_initial[var_i].q  + self.motor_scale[motor_id].get() / self.control_range * ConstPi / 2
 
                 if low_cmd_q > ConstPi: low_cmd_q = ConstPi
                 if low_cmd_q < -ConstPi: low_cmd_q = -ConstPi
@@ -126,7 +126,7 @@ class Controller:
                 self.low_cmd.motor_cmd[var_i].kp = 60
                 self.low_cmd.motor_cmd[var_i].kd = 1.5
                 self.low_cmd.motor_cmd[var_i].q = low_cmd_q
-                self.low_cmd.motor_cmd[var_i].tau = 0
+                self.low_cmd.motor_cmd[var_i].tau = 1
             #
             self.low_cmd_pub.publish(self.low_cmd)
                 
