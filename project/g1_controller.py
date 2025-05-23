@@ -126,7 +126,7 @@ class Controller:
                 self.low_cmd.motor_cmd[var_i].kp = 60
                 self.low_cmd.motor_cmd[var_i].kd = 1.5
                 self.low_cmd.motor_cmd[var_i].q = low_cmd_q
-                self.low_cmd.motor_cmd[var_i].tau = 1
+                self.low_cmd.motor_cmd[var_i].tau = 0
             #
             self.low_cmd_pub.publish(self.low_cmd)
                 
