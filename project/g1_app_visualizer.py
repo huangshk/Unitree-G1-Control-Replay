@@ -1,13 +1,14 @@
+#
+##
 import time
-import numpy as np
-
 import threading
-
+#
 import mujoco
 import mujoco.viewer
-
+#
 from unitree_sdk2py.core.channel import ChannelFactoryInitialize
-
+#
+from g1_header import *
 from g1_body import LowStateSubscriber
 
 
@@ -30,17 +31,15 @@ class Visualizer():
         self.mujoco_model = mujoco.MjModel.from_xml_path(path_scene)
         self.mujoco_data = mujoco.MjData(self.mujoco_model)
         self.mujoco_qpos_default = self.mujoco_data.qpos.copy()
-
+        #
         self.viewer = mujoco.viewer.launch_passive(self.mujoco_model, self.mujoco_data)
-
+        #
         self.thread_lock = threading.Lock()
-
+        #
         self.simulate_dt = simulate_dt
         self.viewer_dt = viewer_dt
-
+        #
         self.mujoco_model.opt.timestep = simulate_dt
-
-        # self.ready = False
 
     #
     ##
@@ -59,36 +58,36 @@ class Visualizer():
         #
         ##
         while self.viewer.is_running() and self.low_state_sub.low_state is not None:
-
+            #
             self.thread_lock.acquire()
-            
-            # if self.count_init > 10:
+            #
             self.mujoco_data.qvel = 0
             self.mujoco_data.qpos = self.mujoco_qpos_default
-
-            for joint_i in range(29):
-                
+            #
+            ##
+            for joint_i in range(G1NumBodyJoint):
+                #
                 self.mujoco_data.qpos[joint_i + 7] = self.low_state_sub.low_state.motor_state[joint_i].q
-            # else:
-
-            #     self.count_init += 1
-            #     self.mujoco_qpos_latest = self.mujoco_data.qpos.copy()
-
+            #
             mujoco.mj_step(self.mujoco_model, self.mujoco_data)
-            
+            #
             self.thread_lock.release()
-            
+            #
             time.sleep(self.simulate_dt)
         
-
+    #
+    ##
     def viewer_thread(self):
         #
         ##
         while self.viewer.is_running():
             #
             self.thread_lock.acquire()
+            #
             self.viewer.sync()
+            #
             self.thread_lock.release()
+            #
             time.sleep(self.viewer_dt)
 
 

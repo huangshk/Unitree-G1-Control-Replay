@@ -6,43 +6,40 @@ from unitree_sdk2py.idl.unitree_go.msg.dds_ import MotorStates_
 
 from unitree_sdk2py.core.channel import ChannelPublisher
 
-from unitree_sdk2py.idl.unitree_go.msg.dds_ import MotorCmd_, MotorCmds_
+from unitree_sdk2py.idl.unitree_go.msg.dds_ import MotorCmds_
 
 #
 ##
 class HandStateSubscriber:
+    '''
+    sudo ./aese_h1_inspire_service/build/inspire_hand -s /dev/ttyUSB1 --namespace hand_r
+    sudo ./aese_h1_inspire_service/build/inspire_hand -s /dev/ttyUSB2 --namespace hand_l
+    '''
     #
     ##
-    def __init__(self,
-                 enable_state_l = True,
-                 enable_state_r = True):
+    def __init__(self):
         #
         ##
-        self.hand_state_l, self.hand_state_r = None, None
+        self.hand_l_state, self.hand_r_state = None, None
         #
         ##
-        if enable_state_l:
-            #
-            self.subscriber_state_l = ChannelSubscriber("rt/hand_l/state", MotorStates_)
-            self.subscriber_state_l.Init(self.handler_state_l, 10)
+        self.subscriber_l = ChannelSubscriber("rt/hand_l/state", MotorStates_)
+        self.subscriber_l.Init(self.handler_l, 10)
         #
-        ##
-        if enable_state_r:
-            #
-            self.subscriber_state_r = ChannelSubscriber("rt/hand_r/state", MotorStates_)
-            self.subscriber_state_r.Init(self.handler_state_r, 10)
+        self.subscriber_r = ChannelSubscriber("rt/hand_r/state", MotorStates_)
+        self.subscriber_r.Init(self.handler_r, 10)
        
     #
     ##
-    def handler_state_l(self, hand_state_l: MotorStates_):
+    def handler_l(self, hand_l_state: MotorStates_):
         #
-        self.hand_state_l = hand_state_l
+        self.hand_l_state = hand_l_state
 
     #
     ##
-    def handler_state_r(self, hand_state_r: MotorStates_):
+    def handler_r(self, hand_r_state: MotorStates_):
         #
-        self.hand_state_r = hand_state_r
+        self.hand_r_state = hand_r_state
 
 #
 ##

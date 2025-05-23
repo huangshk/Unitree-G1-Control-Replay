@@ -7,8 +7,8 @@ from unitree_sdk2py.idl.default import unitree_hg_msg_dds__LowCmd_
 from unitree_sdk2py.comm.motion_switcher.motion_switcher_client import MotionSwitcherClient
 
 from g1_header import *
-from g1_subscribe import LowStateSubscriber
-from g1_publish import LowCmdPublisher
+from deprecate.g1_subscribe import LowStateSubscriber
+from deprecate.g1_publish import LowCmdPublisher
 
 #
 ##
@@ -21,7 +21,7 @@ class Controller:
                  netface,
                  control_range = 1000.0,
                  monitor_dt = 0.1,
-                 control_dt = 0.001):
+                 control_dt = 0.01):
         #
         ##
         ChannelFactoryInitialize(domain, netface)
@@ -34,7 +34,7 @@ class Controller:
         self.low_cmd_pub = LowCmdPublisher()
         self.low_cmd = unitree_hg_msg_dds__LowCmd_()
         #
-        self.motor_list = [motor_id for (motor_id, _) in G1Joint.__dict__.items() if motor_id[0] != "_"]
+        self.motor_list = [motor_id for (motor_id, _) in G1Body.__dict__.items() if motor_id[0] != "_"]
         self.motor_state_initial = self.low_state_sub.low_state.motor_state
         self.mode_machine = self.low_state_sub.low_state.mode_machine
         #
@@ -126,7 +126,7 @@ class Controller:
                 self.low_cmd.motor_cmd[var_i].kp = 60
                 self.low_cmd.motor_cmd[var_i].kd = 1.5
                 self.low_cmd.motor_cmd[var_i].q = low_cmd_q
-                self.low_cmd.motor_cmd[var_i].tau = 0
+                self.low_cmd.motor_cmd[var_i].tau = 5
             #
             self.low_cmd_pub.publish(self.low_cmd)
                 
