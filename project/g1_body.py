@@ -23,7 +23,7 @@ class LowStateSubscriber:
         self.subscriber.Init(self.handler_default, 10)
         #
         self.low_state = None
-        self.ready = False
+        # self.ready = False
 
     #
     ##
@@ -32,7 +32,7 @@ class LowStateSubscriber:
         #
         ##
         self.low_state = low_state
-        self.ready = True
+        # self.ready = True
 
 #
 ##
