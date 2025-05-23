@@ -7,10 +7,11 @@ import threading
 #
 from unitree_sdk2py.core.channel import ChannelFactoryInitialize
 from unitree_sdk2py.idl.default import unitree_hg_msg_dds__LowCmd_
+from unitree_sdk2py.idl.unitree_go.msg.dds_ import MotorCmd_, MotorCmds_
 #
 from g1_header import *
 from g1_body import LowStateSubscriber, LowCmdPublisher
-from g1_hand import HandStateSubscriber
+from g1_hand import HandStateSubscriber, HandCmdPublisher
 
 #
 ##
@@ -38,8 +39,6 @@ class Panel:
         self.low_state_init = self.low_state_sub.low_state
         self.hand_l_state_init = self.hand_state_sub.hand_l_state
         self.hand_r_state_init = self.hand_state_sub.hand_r_state
-
-        #
         #
         self.body_motors = [motor_id for (motor_id, _) in G1Body.__dict__.items() if (motor_id[0] != "_" and motor_id != "kNotUsedJoint")]
         self.hand_l_motors = ["L_Hand_" + motor_id for (motor_id, _) in G1Hand.L.__dict__.items() if motor_id[0] != "_"]
@@ -52,6 +51,10 @@ class Panel:
         #
         self.low_cmd_pub = LowCmdPublisher()
         self.low_cmd = self.init_low_cmd()
+
+        self.hand_cmd_pub = HandCmdPublisher()
+        self.hand_l_cmd = MotorCmds_([MotorCmd_(0, 0.5, 0, 0, 0, 0, [0, 0, 0]) for _ in range(6)])
+        self.hand_r_cmd = MotorCmds_([MotorCmd_(0, 0.5, 0, 0, 0, 0, [0, 0, 0]) for _ in range(6)])
         #
         self.init_panel()
         #
@@ -143,7 +146,7 @@ class Panel:
             if self.hand_state_sub.hand_l_state is not None:
                 hand_l_state = self.hand_state_sub.hand_l_state.states
                 for var_i, motor_id in enumerate(self.hand_l_motors):
-                    self.motor_state_q[motor_id].set(f"{hand_l_state[var_i].q:.6f}")
+                    self.motor_state_q[motor_id].set(f"{hand_l_state[var_i+6].q:.6f}")
             #
             ##
             if self.hand_state_sub.hand_r_state is not None:
@@ -155,80 +158,52 @@ class Panel:
 
     #
     ##
-    def update_cache(self,
-                     motor_list):
-        #
-        ##
-        flag = False
-        #
-        for var_i, motor_id in enumerate(motor_list):
-            #
-            update = self.panel_scale[motor_id].get()
-            #
-            if update == self.panel_scale_cache[motor_id]: 
-                continue
-            #
-            else:
-                flag = True
-                self.panel_scale_cache[motor_id] = update
-        #
-        return flag
-
-
-    ##
     def control_thread(self):
         #
         ##
         while True:
             #
             ##
-            flag_body, flag_hand_l, flag_hand_r = False, False, False
-            #
-            ## check panel
             for var_i, motor_id in enumerate(self.body_motors):
                 #
                 update_body = self.panel_scale[motor_id].get()
                 #
-                if update_body == self.panel_scale_cache[motor_id]: 
-                    continue
+                low_cmd_q = self.low_state_init.motor_state[var_i].q + update_body / self.control_range * ConstPi # / 2
                 #
-                else:
-                    flag_body = True
-                    self.panel_scale_cache[motor_id] = update_body
+                if low_cmd_q > ConstPi: low_cmd_q = ConstPi - 0.1
+                if low_cmd_q < -ConstPi: low_cmd_q = -ConstPi + 0.1
+                #
+                self.low_cmd.motor_cmd[var_i].q = low_cmd_q
             #
-            ##
-            if flag_body:
-                #
-                for var_i, motor_id in enumerate(self.body_motors):
-                    #
-                    update_body = self.panel_scale[motor_id].get()
-                    #
-                    low_cmd_q = self.low_state_init.motor_state[var_i].q + update_body / self.control_range * ConstPi / 2
-                    #
-                    if low_cmd_q > ConstPi: low_cmd_q = ConstPi - 0.1
-                    if low_cmd_q < -ConstPi: low_cmd_q = -ConstPi + 0.1
-                    #
-                    self.low_cmd.motor_cmd[var_i].q = low_cmd_q
-                    #
-                print(time.time())
-                #
-                self.low_cmd_pub.publish(self.low_cmd)
+            self.low_cmd_pub.publish(self.low_cmd)
 
 
             for var_i, motor_id in enumerate(self.hand_l_motors):
                 
                 update_hand_l = self.panel_scale[motor_id].get()
-                #
-                if update_hand_l == self.panel_scale_cache[motor_id]: 
-                    continue
-                #
-                else:
-                    flag_hand_l = True
-                    self.panel_scale_cache[motor_id] = update_hand_l
 
-            # for var_i, motor_id in enumerate(self.hand_r_motors):
+                hand_l_q = (update_hand_l / self.control_range + 1.0) / 2  # self.hand_l_state_init.states[var_i].q + 
+                #
+                if hand_l_q > 1.0: hand_l_q = 1.0
+                if hand_l_q < 0.0: hand_l_q = 0.0
+
+                self.hand_l_cmd.cmds[var_i].q = hand_l_q
+
+            self.hand_cmd_pub.publish_l(self.hand_l_cmd)
                 
-            #     update_scale = self.panel_scale[motor_id].get()
+
+            for var_i, motor_id in enumerate(self.hand_r_motors):
+                
+                update_hand_r = self.panel_scale[motor_id].get()
+
+                hand_r_q = (update_hand_r / self.control_range + 1.0) / 2 
+
+                if hand_r_q > 1.0: hand_r_q = 1.0
+                if hand_r_q < 0.0: hand_r_q = 0.0
+
+                self.hand_r_cmd.cmds[var_i].q = hand_r_q
+
+            self.hand_cmd_pub.publish_r(self.hand_r_cmd)
             #
             time.sleep(self.control_dt)
 

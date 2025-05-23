@@ -82,8 +82,8 @@ if __name__ == "__main__":
 
     ChannelFactoryInitialize(0, "eno1")
     hand_cmd_pub = HandCmdPublisher()
-    hand_cmd = MotorCmds_([MotorCmd_(0, 1, 0, 0, 0, 0,[0,0,0]) for _ in range(6)])
-    hand_cmd_pub.publish_r(hand_cmd)
+    hand_cmd = MotorCmds_([MotorCmd_(0, 1, 0, 0, 0, 0,[0,0,0]) for _ in range(12)])
+    hand_cmd_pub.publish_l(hand_cmd)
     # time.sleep(1)
     # hand_cmd.cmds[0].q = 0.05
     # hand_cmd.cmds[1].q = 0.05
