@@ -3,6 +3,7 @@
 ConstPi = 3.141592654
 
 G1NumBodyJoint = 29
+G1NumHandJoint = 6
 
 #
 ##

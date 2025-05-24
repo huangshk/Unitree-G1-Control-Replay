@@ -56,32 +56,33 @@ class LowCmdPublisher:
         low_cmd.crc = self.crc.Crc(low_cmd)
         self.publisher_lowcmd.Write(low_cmd)
 
-#
-# ##
-# class LowCmd:
-#     #
-#     ##
-#     def __init__(self,
-#                  mode_pr,
-#                  mode_machine,
-#                  motor_cmd):
-#         #
-#         ##
-#         self.low_cmd = unitree_hg_msg_dds__LowCmd_()
 
-#         self.low_cmd.mode_pr = mode_pr
+##
+class LowCmdInit:
+    #
+    ##
+    def __init__(self,
+                 mode_machine,
+                 mode_pr = 0,
+                 motor_cmd_mode = 1,
+                 motor_cmd_dq = 0,
+                 motor_cmd_kp = 60,
+                 motor_cmd_kd = 1.5,
+                 motor_cmd_tau = 0):
+        #
+        ##
+        self.low_cmd = unitree_hg_msg_dds__LowCmd_()
 
-#         self.low_cmd.mode_machine = mode_machine
-
-#         for var_i in range(len(self.low_cmd.motor_cmd)):
-
-
-#             self.low_cmd.motor_cmd[var_i].q = low_cmd_q
-#             #
-#             self.low_cmd.mode_pr = 0
-#             self.low_cmd.mode_machine = self.mode_machine
-#             self.low_cmd.motor_cmd[var_i].mode = 1
-#             self.low_cmd.motor_cmd[var_i].dq = 0
-#             self.low_cmd.motor_cmd[var_i].kp = 60
-#             self.low_cmd.motor_cmd[var_i].kd = 1.5
-#             self.low_cmd.motor_cmd[var_i].tau = 5
+        self.low_cmd.mode_machine = mode_machine
+        #
+        self.low_cmd.mode_pr = mode_pr
+        #
+        for var_i in range(G1NumBodyJoint):
+            #
+            self.low_cmd.motor_cmd[var_i].q = None
+            #
+            self.low_cmd.motor_cmd[var_i].mode = motor_cmd_mode
+            self.low_cmd.motor_cmd[var_i].dq = motor_cmd_dq
+            self.low_cmd.motor_cmd[var_i].kp = motor_cmd_kp
+            self.low_cmd.motor_cmd[var_i].kd = motor_cmd_kd
+            self.low_cmd.motor_cmd[var_i].tau = motor_cmd_tau

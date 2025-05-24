@@ -6,12 +6,12 @@ from tkinter import ttk
 import threading
 #
 from unitree_sdk2py.core.channel import ChannelFactoryInitialize
-from unitree_sdk2py.idl.default import unitree_hg_msg_dds__LowCmd_
-from unitree_sdk2py.idl.unitree_go.msg.dds_ import MotorCmd_, MotorCmds_
+# from unitree_sdk2py.idl.default import unitree_hg_msg_dds__LowCmd_
+# from unitree_sdk2py.idl.unitree_go.msg.dds_ import MotorCmd_, MotorCmds_
 #
 from g1_header import *
-from g1_body import LowStateSubscriber, LowCmdPublisher
-from g1_hand import HandStateSubscriber, HandCmdPublisher
+from g1_body import LowStateSubscriber, LowCmdPublisher, LowCmdInit
+from g1_hand import HandStateSubscriber, HandCmdPublisher, HandCmdInit
 
 #
 ##
@@ -50,11 +50,13 @@ class Panel:
         self.panel_scale_cache = {}
         #
         self.low_cmd_pub = LowCmdPublisher()
-        self.low_cmd = self.init_low_cmd()
+        self.low_cmd = LowCmdInit(self.low_state_init.mode_machine).low_cmd
 
         self.hand_cmd_pub = HandCmdPublisher()
-        self.hand_l_cmd = MotorCmds_([MotorCmd_(0, 0.5, 0, 0, 0, 0, [0, 0, 0]) for _ in range(6)])
-        self.hand_r_cmd = MotorCmds_([MotorCmd_(0, 0.5, 0, 0, 0, 0, [0, 0, 0]) for _ in range(6)])
+        self.hand_l_cmd = HandCmdInit().hand_cmd
+        # MotorCmds_([MotorCmd_(0, 0.5, 0, 0, 0, 0, [0, 0, 0]) for _ in range(6)])
+        self.hand_r_cmd = HandCmdInit().hand_cmd
+        # MotorCmds_([MotorCmd_(0, 0.5, 0, 0, 0, 0, [0, 0, 0]) for _ in range(6)])
         #
         self.init_panel()
         #
@@ -109,26 +111,7 @@ class Panel:
 
                 ttk.Label(self.frame, text = motor_id + "\n", 
                           font = font_content).grid(column = var_column, row = max(row_per_column) * 2 + 1 + var_row * 2 + 2)
-                
-    #
-    ##
-    def init_low_cmd(self):
-        #
-        ##
-        low_cmd = unitree_hg_msg_dds__LowCmd_()
-        low_cmd.mode_pr = 0
-        low_cmd.mode_machine = self.low_state_init.mode_machine
-        #
-        for var_i in range(len(self.body_motors)):
-            #
-            low_cmd.motor_cmd[var_i].mode = 1
-            low_cmd.motor_cmd[var_i].dq = 0
-            low_cmd.motor_cmd[var_i].kp = 60
-            low_cmd.motor_cmd[var_i].kd = 1.5
-            low_cmd.motor_cmd[var_i].tau = 0
-        #
-        return low_cmd
-
+         
     #
     ##
     def monitor_thread(self):
@@ -182,7 +165,7 @@ class Panel:
                 
                 update_hand_l = self.panel_scale[motor_id].get()
 
-                hand_l_q = (update_hand_l / self.control_range + 1.0) / 2  # self.hand_l_state_init.states[var_i].q + 
+                hand_l_q = (update_hand_l / self.control_range + 1.0) / 2
                 #
                 if hand_l_q > 0.99: hand_l_q = 0.99
                 if hand_l_q < 0.01: hand_l_q = 0.01

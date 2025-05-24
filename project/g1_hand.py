@@ -6,7 +6,10 @@ from unitree_sdk2py.idl.unitree_go.msg.dds_ import MotorStates_
 
 from unitree_sdk2py.core.channel import ChannelPublisher
 
-from unitree_sdk2py.idl.unitree_go.msg.dds_ import MotorCmds_
+from unitree_sdk2py.idl.unitree_go.msg.dds_ import MotorCmds_, MotorCmd_
+#
+##
+from g1_header import *
 
 #
 ##
@@ -71,3 +74,14 @@ class HandCmdPublisher:
         #
         ##
         self.publish_hand_r.Write(hand_cmd)
+
+#
+##
+class HandCmdInit:
+    #
+    ##
+    def __init__(self,
+                 motor_qs = [0.5, 0.5, 0.5, 0.5, 0.5, 0.5]):
+        #
+        ##
+        self.hand_cmd = MotorCmds_([MotorCmd_(0, motor_q, 0, 0, 0, 0, [0, 0, 0]) for motor_q in motor_qs])
