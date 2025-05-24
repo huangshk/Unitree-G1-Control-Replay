@@ -1,5 +1,7 @@
 #
 ##
+import copy
+#
 from unitree_sdk2py.core.channel import ChannelSubscriber
 from unitree_sdk2py.idl.unitree_hg.msg.dds_ import LowState_
 #
@@ -33,6 +35,27 @@ class LowStateSubscriber:
         #
         ##
         self.low_state = low_state
+
+
+    #
+    ##
+    def to_dict(self,
+                low_state: LowState_):
+        #
+        ##
+        low_state_dict = copy.deepcopy(low_state).__dict__
+        #
+        low_state_dict["imu_state"] = low_state_dict["imu_state"].__dict__
+        #
+        for var_i in range(len(low_state_dict["motor_state"])):
+            low_state_dict["motor_state"][var_i] = low_state_dict["motor_state"][var_i].__dict__
+        #
+        low_state_dict["sample_info"] = low_state_dict["sample_info"].__dict__
+        low_state_dict["wireless_remote"] = str(low_state_dict["wireless_remote"])
+        print(low_state_dict)
+        #
+        return low_state_dict
+
 
 #
 ##

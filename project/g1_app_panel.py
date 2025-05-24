@@ -1,13 +1,13 @@
 #
 ##
 import time
+import datetime
+import json
 import tkinter
 from tkinter import ttk
 import threading
 #
 from unitree_sdk2py.core.channel import ChannelFactoryInitialize
-# from unitree_sdk2py.idl.default import unitree_hg_msg_dds__LowCmd_
-# from unitree_sdk2py.idl.unitree_go.msg.dds_ import MotorCmd_, MotorCmds_
 #
 from g1_header import *
 from g1_body import LowStateSubscriber, LowCmdPublisher, LowCmdInit
@@ -39,6 +39,8 @@ class Panel:
         self.low_state_init = self.low_state_sub.low_state
         self.hand_l_state_init = self.hand_state_sub.hand_l_state
         self.hand_r_state_init = self.hand_state_sub.hand_r_state
+        #
+        self.low_state_sub.to_dict(self.low_state_init)
         #
         self.body_motors = [motor_id for (motor_id, _) in G1Body.__dict__.items() if (motor_id[0] != "_" and motor_id != "kNotUsedJoint")]
         self.hand_l_motors = ["L_Hand_" + motor_id for (motor_id, _) in G1Hand.L.__dict__.items() if motor_id[0] != "_"]
@@ -88,9 +90,15 @@ class Panel:
             for var_row in range(row_per_column[var_column]):
                 #
                 ##
-                if var_column < 5: motor_id = self.body_motors[sum(row_per_column[:var_column]) + var_row]
-                elif var_column == 5: motor_id = self.hand_l_motors[var_row]
-                elif var_column == 6: motor_id = self.hand_r_motors[var_row]
+                if var_column < 5:
+                    index = sum(row_per_column[:var_column]) + var_row 
+                    motor_id = self.body_motors[index]
+                elif var_column == 5: 
+                    index = var_row
+                    motor_id = self.hand_l_motors[index]
+                elif var_column == 6: 
+                    index = var_row
+                    motor_id = self.hand_r_motors[index]
                 #
                 ## control
                 self.panel_scale[motor_id] = tkinter.Scale(self.frame, orient = tkinter.HORIZONTAL, 
@@ -101,15 +109,37 @@ class Panel:
                 #
                 self.panel_scale_cache[motor_id] = 0
                 #
-                ttk.Label(self.frame, text = motor_id, font = font_content).grid(column = var_column, row = var_row * 2 + 2)
+                ttk.Label(self.frame, text = str(index) + " " + motor_id, 
+                          font = font_content).grid(column = var_column, row = var_row * 2 + 2)
                 #
                 ## monitor
                 ttk.Label(self.frame, textvariable = self.motor_state_q[motor_id], 
                           font = ("Arial", 12)).grid(column = var_column, row = max(row_per_column) * 2 + 1 + var_row * 2 + 1)
 
-                ttk.Label(self.frame, text = motor_id + "\n", 
+                ttk.Label(self.frame, text = str(index) + " " + motor_id + "\n", 
                           font = font_content).grid(column = var_column, row = max(row_per_column) * 2 + 1 + var_row * 2 + 2)
-         
+        #
+        ##
+        ttk.Button(self.frame, text = "Snapshot", command = self.handler_snapshot).grid(column = 0, row = 0)
+        
+    #
+    ##
+    def handler_snapshot(self):
+        #
+        ##
+        var_time = str(datetime.datetime.now()).replace("-", "_").replace(" ", "_").replace(".", "_").replace(":", "_")
+        #
+        snapshot = {}
+        #
+        snapshot["low_state"] = self.low_state_sub.to_dict(self.low_state_sub.low_state)
+
+        with open(var_time + ".json", "w", encoding = "utf-8") as file:
+            json.dump(snapshot, file, indent = 4)
+
+        print(var_time)
+
+    
+
     #
     ##
     def monitor_thread(self):
@@ -144,7 +174,7 @@ class Panel:
         ##
         while True:
             #
-            ##
+            ## body
             for var_i, motor_id in enumerate(self.body_motors):
                 #
                 update_body = self.panel_scale[motor_id].get()
@@ -154,8 +184,8 @@ class Panel:
                 self.low_cmd.motor_cmd[var_i].q = low_cmd_q
             #
             self.low_cmd_pub.publish(self.low_cmd)
-
-
+            #
+            ## left hand
             for var_i, motor_id in enumerate(self.hand_l_motors):
                 
                 update_hand_l = self.panel_scale[motor_id].get()
@@ -165,8 +195,8 @@ class Panel:
                 self.hand_l_cmd.cmds[var_i].q = hand_l_q
 
             self.hand_cmd_pub.publish_l(self.hand_l_cmd)
-                
-
+            #
+            # right hand
             for var_i, motor_id in enumerate(self.hand_r_motors):
                 
                 update_hand_r = self.panel_scale[motor_id].get()
