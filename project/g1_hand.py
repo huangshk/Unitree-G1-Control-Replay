@@ -1,4 +1,6 @@
 
+import copy
+
 from unitree_sdk2py.core.channel import ChannelSubscriber
 
 from unitree_sdk2py.idl.unitree_go.msg.dds_ import MotorStates_
@@ -44,6 +46,21 @@ class HandStateSubscriber:
         #
         self.hand_r_state = hand_r_state
 
+    #
+    ##
+    def to_dict(self,
+                hand_state: MotorStates_):
+        #
+        ##
+        hand_state_dict = copy.deepcopy(hand_state).__dict__
+        #
+        for var_i in range(len(hand_state_dict["states"])):
+            hand_state_dict["states"][var_i] = hand_state_dict["states"][var_i].__dict__
+        #
+        hand_state_dict["sample_info"] = hand_state_dict["sample_info"].__dict__
+        #
+        return hand_state_dict
+
 #
 ##
 class HandCmdPublisher:
@@ -84,6 +101,19 @@ class HandCmdPublisher:
             if hand_cmd.cmds[var_i].q < 0.01: hand_cmd.cmds[var_i].q = 0.01
         #
         self.publish_hand_r.Write(hand_cmd)
+
+    #
+    ##
+    def to_dict(self,
+                hand_cmd: MotorCmds_):
+        #
+        ##
+        hand_cmd_dict = copy.deepcopy(hand_cmd).__dict__
+        #
+        for var_i in range(len(hand_cmd_dict["cmds"])):
+            hand_cmd_dict["cmds"][var_i] = hand_cmd_dict["cmds"][var_i].__dict__
+        #
+        return hand_cmd_dict
 
 #
 ##

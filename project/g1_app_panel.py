@@ -37,10 +37,6 @@ class Panel:
         self.hand_state_sub = HandStateSubscriber()
         #
         self.low_state_init = self.low_state_sub.low_state
-        self.hand_l_state_init = self.hand_state_sub.hand_l_state
-        self.hand_r_state_init = self.hand_state_sub.hand_r_state
-        #
-        self.low_state_sub.to_dict(self.low_state_init)
         #
         self.body_motors = [motor_id for (motor_id, _) in G1Body.__dict__.items() if (motor_id[0] != "_" and motor_id != "kNotUsedJoint")]
         self.hand_l_motors = ["L_Hand_" + motor_id for (motor_id, _) in G1Hand.L.__dict__.items() if motor_id[0] != "_"]
@@ -132,13 +128,18 @@ class Panel:
         snapshot = {}
         #
         snapshot["low_state"] = self.low_state_sub.to_dict(self.low_state_sub.low_state)
-
+        snapshot["hand_l_state"] = self.hand_state_sub.to_dict(self.hand_state_sub.hand_l_state)
+        snapshot["hand_r_state"] = self.hand_state_sub.to_dict(self.hand_state_sub.hand_r_state)
+        #
+        snapshot["low_cmd"] = self.low_cmd_pub.to_dict(self.low_cmd)
+        snapshot["hand_l_cmd"] = self.hand_cmd_pub.to_dict(self.hand_l_cmd)
+        snapshot["hand_r_cmd"] = self.hand_cmd_pub.to_dict(self.hand_r_cmd)
+        #
         with open(var_time + ".json", "w", encoding = "utf-8") as file:
+            #
             json.dump(snapshot, file, indent = 4)
-
-        print(var_time)
-
-    
+        #
+        print("Snapshot", var_time)
 
     #
     ##
