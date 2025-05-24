@@ -65,6 +65,11 @@ class HandCmdPublisher:
                   hand_cmd: MotorCmds_):
         #
         ##
+        for var_i in range(len(hand_cmd.cmds)):
+            #
+            if hand_cmd.cmds[var_i].q > 0.99: hand_cmd.cmds[var_i].q = 0.99
+            if hand_cmd.cmds[var_i].q < 0.01: hand_cmd.cmds[var_i].q = 0.01
+        #
         self.publish_hand_l.Write(hand_cmd)
 
     #
@@ -73,6 +78,11 @@ class HandCmdPublisher:
                   hand_cmd: MotorCmds_):
         #
         ##
+        for var_i in range(len(hand_cmd.cmds)):
+            #
+            if hand_cmd.cmds[var_i].q > 0.99: hand_cmd.cmds[var_i].q = 0.99
+            if hand_cmd.cmds[var_i].q < 0.01: hand_cmd.cmds[var_i].q = 0.01
+        #
         self.publish_hand_r.Write(hand_cmd)
 
 #

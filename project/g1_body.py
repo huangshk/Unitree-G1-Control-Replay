@@ -53,6 +53,11 @@ class LowCmdPublisher:
                 low_cmd: LowCmd_):
         #
         ##
+        for var_i in range(len(low_cmd.motor_cmd)):
+            #
+            if low_cmd.motor_cmd[var_i].q > ConstPi: low_cmd.motor_cmd[var_i].q = ConstPi - 0.1
+            if low_cmd.motor_cmd[var_i].q < -ConstPi: low_cmd.motor_cmd[var_i].q = -ConstPi + 0.1
+        #
         low_cmd.crc = self.crc.Crc(low_cmd)
         self.publisher_lowcmd.Write(low_cmd)
 

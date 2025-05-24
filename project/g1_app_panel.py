@@ -54,9 +54,7 @@ class Panel:
 
         self.hand_cmd_pub = HandCmdPublisher()
         self.hand_l_cmd = HandCmdInit().hand_cmd
-        # MotorCmds_([MotorCmd_(0, 0.5, 0, 0, 0, 0, [0, 0, 0]) for _ in range(6)])
         self.hand_r_cmd = HandCmdInit().hand_cmd
-        # MotorCmds_([MotorCmd_(0, 0.5, 0, 0, 0, 0, [0, 0, 0]) for _ in range(6)])
         #
         self.init_panel()
         #
@@ -153,9 +151,6 @@ class Panel:
                 #
                 low_cmd_q = self.low_state_init.motor_state[var_i].q + update_body / self.control_range * ConstPi # / 2
                 #
-                if low_cmd_q > ConstPi: low_cmd_q = ConstPi - 0.1
-                if low_cmd_q < -ConstPi: low_cmd_q = -ConstPi + 0.1
-                #
                 self.low_cmd.motor_cmd[var_i].q = low_cmd_q
             #
             self.low_cmd_pub.publish(self.low_cmd)
@@ -166,9 +161,6 @@ class Panel:
                 update_hand_l = self.panel_scale[motor_id].get()
 
                 hand_l_q = (update_hand_l / self.control_range + 1.0) / 2
-                #
-                if hand_l_q > 0.99: hand_l_q = 0.99
-                if hand_l_q < 0.01: hand_l_q = 0.01
 
                 self.hand_l_cmd.cmds[var_i].q = hand_l_q
 
@@ -180,9 +172,6 @@ class Panel:
                 update_hand_r = self.panel_scale[motor_id].get()
 
                 hand_r_q = (update_hand_r / self.control_range + 1.0) / 2 
-
-                if hand_r_q > 0.99: hand_r_q = 0.99
-                if hand_r_q < 0.01: hand_r_q = 0.01
 
                 self.hand_r_cmd.cmds[var_i].q = hand_r_q
 
