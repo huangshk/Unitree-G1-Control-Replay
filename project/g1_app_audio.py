@@ -81,31 +81,31 @@ class WavClient(AudioClient):
         super().__init__()
     
     def play_wav(self,
-                 path_wav = "audio_test.wav"):
+                 path_wav = "audio/imperial_best.wav"):
         
         audio = wave.open(path_wav, "r")
 
         print(audio.getparams())
 
         num_frame = audio.getnframes()
-
         # byte_per_frame = 2
-
+        framerate = audio.getframerate()
         var_bytes = audio.readframes(num_frame)
 
         # var_byte_list = [var_bytes[var_i : var_i+1] for var_i in range(len(var_bytes))]
-        var_byte_list = []
-        for frame_i in range(num_frame):
-            var_byte_list.append(var_bytes[frame_i+1 : frame_i+2])
-            var_byte_list.append(var_bytes[frame_i : frame_i+1])
+        # var_byte_list = []
+        # for frame_i in range(num_frame):
+        #     var_byte_list.append(var_bytes[frame_i+1 : frame_i+2])
+        #     var_byte_list.append(var_bytes[frame_i : frame_i+1])
 
 
-        print(len(var_byte_list))
+        # print(len(var_byte_list))
 
         # var_uint8_list = [types.uint8(int.from_bytes(var_bytes[0:1], "little"))]
 
         var_uint8_list = []
         for frame_i in range(num_frame):
+            if framerate == 24000 and frame_i % 3 == 0: continue
             var_uint8_list.append(int.from_bytes(var_bytes[frame_i*2 : frame_i*2 + 1], "big"))
             var_uint8_list.append(int.from_bytes(var_bytes[frame_i*2 + 1 : frame_i*2 + 2], "big"))
             # var_uint8_list.append(var_bytes[frame_i : frame_i+1])
