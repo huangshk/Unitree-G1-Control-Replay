@@ -152,7 +152,7 @@ class Panel:
             if self.hand_state_sub.hand_r_state is not None:
                 hand_r_state = self.hand_state_sub.hand_r_state.states
                 for var_i, motor_id in enumerate(self.hand_r_motors):
-                    self.motor_state_q[motor_id].set(f"{hand_r_state[var_i].q:.6f}")
+                    self.motor_state_q[motor_id].set(f"{hand_r_state[var_i+6].q:.6f}")
             #
             time.sleep(self.monitor_dt)
 
@@ -184,8 +184,8 @@ class Panel:
 
                 hand_l_q = (update_hand_l / self.control_range + 1.0) / 2  # self.hand_l_state_init.states[var_i].q + 
                 #
-                if hand_l_q > 1.0: hand_l_q = 1.0
-                if hand_l_q < 0.0: hand_l_q = 0.0
+                if hand_l_q > 0.99: hand_l_q = 0.99
+                if hand_l_q < 0.01: hand_l_q = 0.01
 
                 self.hand_l_cmd.cmds[var_i].q = hand_l_q
 
@@ -198,8 +198,8 @@ class Panel:
 
                 hand_r_q = (update_hand_r / self.control_range + 1.0) / 2 
 
-                if hand_r_q > 1.0: hand_r_q = 1.0
-                if hand_r_q < 0.0: hand_r_q = 0.0
+                if hand_r_q > 0.99: hand_r_q = 0.99
+                if hand_r_q < 0.01: hand_r_q = 0.01
 
                 self.hand_r_cmd.cmds[var_i].q = hand_r_q
 
