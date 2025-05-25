@@ -1,6 +1,7 @@
 #
 ##
 import time
+import copy
 import datetime
 import json
 import tkinter
@@ -16,7 +17,6 @@ from g1_hand import HandStateSubscriber, HandCmdPublisher, HandCmdInit
 #
 ##
 class Panel:
-
     #
     ##
     def __init__(self,
@@ -24,12 +24,14 @@ class Panel:
                  netface,
                  control_range = 100.0,
                  monitor_dt = 0.1,
-                 control_dt = 0.001):
+                 control_dt = 0.01,
+                 default_path = "snapshot/default.json"):
         #
         ##
         self.control_range = control_range
         self.monitor_dt = monitor_dt
         self.control_dt = control_dt
+        self.default_path = default_path
         #
         ChannelFactoryInitialize(domain, netface)
         #
@@ -55,6 +57,7 @@ class Panel:
         self.hand_r_cmd = HandCmdInit().hand_cmd
         #
         self.init_panel()
+        self.handler_reset()
         #
         self.thread_monitor = threading.Thread(target = self.monitor_thread)
         self.thread_control = threading.Thread(target = self.control_thread)
@@ -117,6 +120,15 @@ class Panel:
         #
         ##
         ttk.Button(self.frame, text = "Snapshot", command = self.handler_snapshot).grid(column = 0, row = 0)
+
+        ttk.Button(self.frame, text = "Reset", command = self.handler_reset).grid(column = len(row_per_column) - 1, row = 0)
+        #
+        ##
+        self.enable_control = tkinter.BooleanVar(value = False)
+        self.button_enable_control = ttk.Checkbutton(self.frame, text = "Enable Control", 
+                                                     variable = self.enable_control, command = self.handler_enable_control,
+                                                     onvalue = True, offvalue = False)
+        self.button_enable_control.grid(column = len(row_per_column)//2 + 1, row = 0)
         
     #
     ##
@@ -141,6 +153,50 @@ class Panel:
         #
         print("Snapshot", var_time)
 
+    #
+    ##
+    def handler_enable_control(self):
+        #
+        ##
+        if self.enable_control:
+            #
+            for scale in self.panel_scale.values():   scale.set(0)
+
+    #
+    ##
+    def handler_reset(self):
+        #
+        ##
+        self.enable_control.set(False)
+        #
+        for scale in self.panel_scale.values():   scale.set(0)
+        #
+        default_file = open(self.default_path)
+        default_set = json.load(default_file)
+        #
+        ##
+        source_q, target_q = [],[]
+        #
+        for var_i, _ in enumerate(self.body_motors):
+            #
+            source_q.append(self.low_state_sub.low_state.motor_state[var_i].q)
+            target_q.append(default_set["low_cmd"]["motor_cmd"][var_i]["q"])
+        #
+        for var_t in range(200):
+            
+            for var_i, _ in enumerate(self.body_motors):
+
+                self.low_cmd.motor_cmd[var_i].q = source_q[var_i] + (target_q[var_i] - source_q[var_i]) / 200 * (var_t + 1)
+
+            self.low_cmd_pub.publish(self.low_cmd)
+            #
+            time.sleep(0.01)
+
+        self.enable_control.set(True)
+        #
+        self.low_state_init = self.low_state_sub.low_state
+        self.low_cmd_init = copy.deepcopy(self.low_cmd)
+        
     #
     ##
     def monitor_thread(self):
@@ -180,11 +236,10 @@ class Panel:
                 #
                 update_body = self.panel_scale[motor_id].get()
                 #
-                low_cmd_q = self.low_state_init.motor_state[var_i].q + update_body / self.control_range * ConstPi # / 2
+                # low_cmd_q = self.low_state_init.motor_state[var_i].q + update_body / self.control_range * ConstPi # / 2
+                low_cmd_q = self.low_cmd_init.motor_cmd[var_i].q + update_body / self.control_range * ConstPi # / 2
                 #
                 self.low_cmd.motor_cmd[var_i].q = low_cmd_q
-            #
-            self.low_cmd_pub.publish(self.low_cmd)
             #
             ## left hand
             for var_i, motor_id in enumerate(self.hand_l_motors):
@@ -194,8 +249,6 @@ class Panel:
                 hand_l_q = (update_hand_l / self.control_range + 1.0) / 2
 
                 self.hand_l_cmd.cmds[var_i].q = hand_l_q
-
-            self.hand_cmd_pub.publish_l(self.hand_l_cmd)
             #
             # right hand
             for var_i, motor_id in enumerate(self.hand_r_motors):
@@ -205,8 +258,13 @@ class Panel:
                 hand_r_q = (update_hand_r / self.control_range + 1.0) / 2 
 
                 self.hand_r_cmd.cmds[var_i].q = hand_r_q
-
-            self.hand_cmd_pub.publish_r(self.hand_r_cmd)
+            #
+            ##
+            if self.enable_control.get():
+                #
+                self.low_cmd_pub.publish(self.low_cmd)
+                self.hand_cmd_pub.publish_l(self.hand_l_cmd)
+                self.hand_cmd_pub.publish_r(self.hand_r_cmd)
             #
             time.sleep(self.control_dt)
 

@@ -76,8 +76,8 @@ class LowCmdPublisher:
         ##
         for var_i in range(len(low_cmd.motor_cmd)):
             #
-            if low_cmd.motor_cmd[var_i].q > ConstPi: low_cmd.motor_cmd[var_i].q = ConstPi - 0.1
-            if low_cmd.motor_cmd[var_i].q < -ConstPi: low_cmd.motor_cmd[var_i].q = -ConstPi + 0.1
+            if low_cmd.motor_cmd[var_i].q > ConstPi - 1: low_cmd.motor_cmd[var_i].q = ConstPi - 1
+            if low_cmd.motor_cmd[var_i].q < -ConstPi + 1: low_cmd.motor_cmd[var_i].q = -ConstPi + 1
         #
         low_cmd.crc = self.crc.Crc(low_cmd)
         self.publisher_lowcmd.Write(low_cmd)
@@ -107,7 +107,7 @@ class LowCmdInit:
                  motor_cmd_dq = 0,
                  motor_cmd_kp = 60,
                  motor_cmd_kd = 1.5,
-                 motor_cmd_tau = 0):
+                 motor_cmd_tau = 1):
         #
         ##
         self.low_cmd = unitree_hg_msg_dds__LowCmd_()
