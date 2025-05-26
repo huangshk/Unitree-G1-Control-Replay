@@ -45,7 +45,8 @@ class Replay:
 
         #
         self.init_panel()
-        self.ready = False
+        self.flag_ready = False
+        self.flag_run = False
 
         self.thread_control = threading.Thread(target = self.control_thread)
 
@@ -98,42 +99,50 @@ class Replay:
     def handler_run(self):
         #
         ##
-        self.button_reset["state"] = tkinter.DISABLED
-        #
-        # target_dict_list = []
-        # duration_list = []
-        #
-        # for var_i in range(self.num_target):
+        thread_run = threading.Thread(target = self.run_thread)
+        self.flag_run = True
+        thread_run.start()
+        # thread_run.join()
+        # self.button_reset["state"] = tkinter.DISABLED
 
-            # if self.target_box_list[var_i].get() != "":
+        # var_i = 0
 
-                # with open(self.path_snapshot + "/" + self.target_box_list[var_i].get()) as file:
-
-                    # targe_dict = json.load(file)
-
-                    # target_dict_list.append(targe_dict)
-                #
-                # if self.duration_box_list[var_i].get() != "":
-                    #
-                    # duration_list.append(float(self.duration_box_list[var_i].get()))
-                #
-                # else:
-                    # duration_list.append(1.0)
-
-        # assert(len(target_dict_list) == len(duration_list))
-        #
-        # target_q_array = []
-        #
-        # for targe_dict, duration in zip(target_dict_list, duration_list):
+        # while var_i < self.num_target:
             
-            # target_q = [targe_dict["low_cmd"]["motor_cmd"][motor_i]["q"] for motor_i in range(len(self.body_motors))]
+        #     if self.target_box_list[var_i].get() != "":
 
-            # print(target_q, duration)
-            # time.sleep(1)
+        #         with open(self.path_snapshot + "/" + self.target_box_list[var_i].get()) as file:
 
-            # self.forward(target_q, duration)
+        #             targe_dict = json.load(file)
+
+        #             target_q = [targe_dict["low_cmd"]["motor_cmd"][motor_i]["q"] for motor_i in range(len(self.body_motors))]
+        #         #
+        #         if self.duration_box_list[var_i].get() != "":
+        #             #
+        #             duration = float(self.duration_box_list[var_i].get())
+        #         #
+        #         else:
+        #             duration = 1.0
+
+        #         self.forward(target_q, duration)
+        #     #
+        #     ##
+        #     if self.repeat_box_list[var_i].get() != "" and int(self.repeat_box_list[var_i].get()) < self.num_target:
+
+        #         var_i = int(self.repeat_box_list[var_i].get())
+        #     #
+        #     else:
+
+        #         var_i = var_i + 1
+
+        # self.button_reset["state"] = tkinter.NORMAL
+
+    #
+    ##
+    def run_thread(self):
 
         var_i = 0
+
         while var_i < self.num_target:
             
             if self.target_box_list[var_i].get() != "":
@@ -152,19 +161,17 @@ class Replay:
                     duration = 1.0
 
                 self.forward(target_q, duration)
-
+            #
+            ##
             if self.repeat_box_list[var_i].get() != "" and int(self.repeat_box_list[var_i].get()) < self.num_target:
+
                 var_i = int(self.repeat_box_list[var_i].get())
+            #
             else:
+
                 var_i = var_i + 1
-
-        # for target_i in range(len(target_dict_list)):
-        #     targe_dict, duration = target_dict_list[target_i], duration_list[target_i]
-        #     target_q = [targe_dict["low_cmd"]["motor_cmd"][motor_i]["q"] for motor_i in range(len(self.body_motors))]
-        #     self.forward(target_q, duration)
-
-
-        self.button_reset["state"] = tkinter.NORMAL
+            
+            if not self.flag_run: break
 
     #
     ##
@@ -173,11 +180,17 @@ class Replay:
         ##
         self.button_run["state"] = tkinter.DISABLED
         #
+        self.flag_run = False
+
+        time.sleep(1)
+        #
         target_q = [self.default_set["low_cmd"]["motor_cmd"][motor_i]["q"] for motor_i in range(len(self.body_motors))]
         #
         # print(len(target_q))
         #
         self.forward(target_q, 1)
+
+        # self.flag_run = True
         #
         self.button_run["state"] = tkinter.NORMAL
 
@@ -191,7 +204,7 @@ class Replay:
 
         num_step = int(duration / self.control_dt) 
 
-        if self.ready:
+        if self.flag_ready:
             source_q = [self.low_cmd.motor_cmd[motor_i].q for motor_i in range(len(self.body_motors))]
         else:
             source_q = [self.low_state_sub.low_state.motor_state[motor_i].q for motor_i in range(len(self.body_motors))]
@@ -207,7 +220,7 @@ class Replay:
 
                 self.low_cmd.motor_cmd[var_i].q = source_q[var_i] + (target_q[var_i] - source_q[var_i]) / num_step * (var_t + 1)
 
-            self.ready = True
+            self.flag_ready = True
             time.sleep(self.control_dt)
         #
         for var_i, _ in enumerate(self.body_motors):
@@ -223,7 +236,7 @@ class Replay:
         while True:
             #
             ## body
-            if self.ready:
+            if self.flag_ready:
                 #
                 self.low_cmd_pub.publish(self.low_cmd)
             #
