@@ -163,9 +163,9 @@ class Panel:
     def handler_enable_control(self):
         #
         ##
-        if self.enable_control:
+        if self.enable_control.get():
             #
-            for scale in self.panel_scale.values():   scale.set(0)
+            self.handler_reset()
 
     #
     ##
@@ -234,6 +234,9 @@ class Panel:
     def control_thread(self):
         #
         ##
+        self.handler_reset()
+        #
+        ##
         while True:
             #
             ## body
@@ -280,7 +283,7 @@ class Panel:
         ##
         self.thread_monitor.start()
         self.thread_control.start()
-        self.handler_reset()
+        # self.handler_reset()
         self.panel.mainloop()
 
 #
