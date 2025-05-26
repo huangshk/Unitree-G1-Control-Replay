@@ -145,8 +145,10 @@ class Panel:
         snapshot = {}
         #
         snapshot["low_state"] = self.low_state_sub.to_dict(self.low_state_sub.low_state)
-        snapshot["hand_l_state"] = self.hand_state_sub.to_dict(self.hand_state_sub.hand_l_state)
-        snapshot["hand_r_state"] = self.hand_state_sub.to_dict(self.hand_state_sub.hand_r_state)
+        if self.hand_state_sub.hand_l_state is not None:
+            snapshot["hand_l_state"] = self.hand_state_sub.to_dict(self.hand_state_sub.hand_l_state)
+        if self.hand_state_sub.hand_r_state is not None:
+            snapshot["hand_r_state"] = self.hand_state_sub.to_dict(self.hand_state_sub.hand_r_state)
         #
         snapshot["low_cmd"] = self.low_cmd_pub.to_dict(self.low_cmd)
         snapshot["hand_l_cmd"] = self.hand_cmd_pub.to_dict(self.hand_l_cmd)
