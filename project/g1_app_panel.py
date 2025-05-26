@@ -31,7 +31,8 @@ class Panel:
         self.control_range = control_range
         self.monitor_dt = monitor_dt
         self.control_dt = control_dt
-        self.default_path = default_path
+        with open(default_path) as default_file:
+            self.default_set = json.load(default_file)
         #
         ChannelFactoryInitialize(domain, netface)
         #
@@ -51,13 +52,17 @@ class Panel:
         #
         self.low_cmd_pub = LowCmdPublisher()
         self.low_cmd = LowCmdInit(self.low_state_init.mode_machine).low_cmd
-
+        #
+        self.low_cmd_init = LowCmdInit(self.low_state_init.mode_machine).low_cmd
+        for var_i, _ in enumerate(self.body_motors):
+            self.low_cmd_init.motor_cmd[var_i].q = self.default_set["low_cmd"]["motor_cmd"][var_i]["q"]
+        #
         self.hand_cmd_pub = HandCmdPublisher()
         self.hand_l_cmd = HandCmdInit().hand_cmd
         self.hand_r_cmd = HandCmdInit().hand_cmd
         #
         self.init_panel()
-        self.handler_reset()
+        # self.handler_reset()
         #
         self.thread_monitor = threading.Thread(target = self.monitor_thread)
         self.thread_control = threading.Thread(target = self.control_thread)
@@ -171,8 +176,8 @@ class Panel:
         #
         for scale in self.panel_scale.values():   scale.set(0)
         #
-        default_file = open(self.default_path)
-        default_set = json.load(default_file)
+        # default_file = open(self.default_path)
+        # default_set = json.load(default_file)
         #
         ##
         source_q, target_q = [],[]
@@ -180,10 +185,10 @@ class Panel:
         for var_i, _ in enumerate(self.body_motors):
             #
             source_q.append(self.low_state_sub.low_state.motor_state[var_i].q)
-            target_q.append(default_set["low_cmd"]["motor_cmd"][var_i]["q"])
+            target_q.append(self.low_cmd_init.motor_cmd[var_i].q)
         #
         for var_t in range(200):
-            
+            #
             for var_i, _ in enumerate(self.body_motors):
 
                 self.low_cmd.motor_cmd[var_i].q = source_q[var_i] + (target_q[var_i] - source_q[var_i]) / 200 * (var_t + 1)
@@ -194,8 +199,8 @@ class Panel:
 
         self.enable_control.set(True)
         #
-        self.low_state_init = self.low_state_sub.low_state
-        self.low_cmd_init = copy.deepcopy(self.low_cmd)
+        # self.low_state_init = self.low_state_sub.low_state
+        # self.low_cmd_init = copy.deepcopy(self.low_cmd)
         
     #
     ##
@@ -275,6 +280,7 @@ class Panel:
         ##
         self.thread_monitor.start()
         self.thread_control.start()
+        self.handler_reset()
         self.panel.mainloop()
 
 #
