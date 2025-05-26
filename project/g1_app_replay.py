@@ -72,6 +72,7 @@ class Replay:
         
         ttk.Label(self.frame, text = "Target", font = font_title).grid(column = 1, row = 0, pady = 2)
         ttk.Label(self.frame, text = "Duration (s)", font = font_title).grid(column = 2, row = 0, pady = 2)
+        ttk.Label(self.frame, text = "Repeat", font = font_title).grid(column = 3, row = 0, pady = 2)
 
         target_json_list = os.listdir(self.path_snapshot)
         target_json_list.sort()
@@ -79,6 +80,7 @@ class Replay:
         self.target_box_list = [ttk.Combobox(self.frame, width = 100, values = target_json_list, font = font_content) for _ in range(self.num_target)]
 
         self.duration_box_list = [ttk.Entry(self.frame, justify = tkinter.CENTER, font = font_content) for _ in range(self.num_target)]
+        self.repeat_box_list = [ttk.Entry(self.frame, justify = tkinter.CENTER, font = font_content) for _ in range(self.num_target)]
 
         for var_i in range(self.num_target):
             
@@ -87,6 +89,7 @@ class Replay:
             self.target_box_list[var_i].grid(column = 1, row = var_i + 1, pady = 10, padx = 10)
 
             self.duration_box_list[var_i].grid(column = 2, row = var_i + 1, pady = 10, padx = 10)
+            self.repeat_box_list[var_i].grid(column = 3, row = var_i + 1, pady = 10, padx = 10)
             # duration_box_list[var_i].insert(0, "1.0")
             # print(duration_box_list[var_i].get())
 
@@ -97,38 +100,69 @@ class Replay:
         ##
         self.button_reset["state"] = tkinter.DISABLED
         #
-        target_dict_list = []
-        duration_list = []
+        # target_dict_list = []
+        # duration_list = []
         #
-        for var_i in range(self.num_target):
+        # for var_i in range(self.num_target):
 
+            # if self.target_box_list[var_i].get() != "":
+
+                # with open(self.path_snapshot + "/" + self.target_box_list[var_i].get()) as file:
+
+                    # targe_dict = json.load(file)
+
+                    # target_dict_list.append(targe_dict)
+                #
+                # if self.duration_box_list[var_i].get() != "":
+                    #
+                    # duration_list.append(float(self.duration_box_list[var_i].get()))
+                #
+                # else:
+                    # duration_list.append(1.0)
+
+        # assert(len(target_dict_list) == len(duration_list))
+        #
+        # target_q_array = []
+        #
+        # for targe_dict, duration in zip(target_dict_list, duration_list):
+            
+            # target_q = [targe_dict["low_cmd"]["motor_cmd"][motor_i]["q"] for motor_i in range(len(self.body_motors))]
+
+            # print(target_q, duration)
+            # time.sleep(1)
+
+            # self.forward(target_q, duration)
+
+        var_i = 0
+        while var_i < self.num_target:
+            
             if self.target_box_list[var_i].get() != "":
 
                 with open(self.path_snapshot + "/" + self.target_box_list[var_i].get()) as file:
 
                     targe_dict = json.load(file)
 
-                    target_dict_list.append(targe_dict)
+                    target_q = [targe_dict["low_cmd"]["motor_cmd"][motor_i]["q"] for motor_i in range(len(self.body_motors))]
                 #
                 if self.duration_box_list[var_i].get() != "":
                     #
-                    duration_list.append(float(self.duration_box_list[var_i].get()))
+                    duration = float(self.duration_box_list[var_i].get())
                 #
                 else:
-                    duration_list.append(1.0)
+                    duration = 1.0
 
-        assert(len(target_dict_list) == len(duration_list))
-        #
-        # target_q_array = []
-        #
-        for targe_dict, duration in zip(target_dict_list, duration_list):
-            
-            target_q = [targe_dict["low_cmd"]["motor_cmd"][motor_i]["q"] for motor_i in range(len(self.body_motors))]
+                self.forward(target_q, duration)
 
-            # print(target_q, duration)
-            # time.sleep(1)
+            if self.repeat_box_list[var_i].get() != "" and int(self.repeat_box_list[var_i].get()) < self.num_target:
+                var_i = int(self.repeat_box_list[var_i].get())
+            else:
+                var_i = var_i + 1
 
-            self.forward(target_q, duration)
+        # for target_i in range(len(target_dict_list)):
+        #     targe_dict, duration = target_dict_list[target_i], duration_list[target_i]
+        #     target_q = [targe_dict["low_cmd"]["motor_cmd"][motor_i]["q"] for motor_i in range(len(self.body_motors))]
+        #     self.forward(target_q, duration)
+
 
         self.button_reset["state"] = tkinter.NORMAL
 
@@ -143,7 +177,7 @@ class Replay:
         #
         # print(len(target_q))
         #
-        self.forward(target_q, 2)
+        self.forward(target_q, 1)
         #
         self.button_run["state"] = tkinter.NORMAL
 
@@ -156,7 +190,7 @@ class Replay:
         if duration < 1.0: duration = 1.0
 
         num_step = int(duration / self.control_dt) 
-        
+
         if self.ready:
             source_q = [self.low_cmd.motor_cmd[motor_i].q for motor_i in range(len(self.body_motors))]
         else:
