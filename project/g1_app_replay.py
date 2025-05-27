@@ -21,7 +21,7 @@ class Replay:
                  netface,
                  control_dt = 0.01,
                  num_target = 10,
-                 default_duration = 1.0,
+                 default_duration = 1,
                  path_snapshot = "snapshot",
                  path_default = "snapshot/default.json"):
         #
@@ -76,8 +76,9 @@ class Replay:
         
         ttk.Label(self.frame, text = "Target", font = font_title).grid(column = 1, row = 0, pady = 2)
         ttk.Label(self.frame, text = "Duration (s)", font = font_title).grid(column = 2, row = 0, pady = 2)
-        ttk.Label(self.frame, text = "Repeat", font = font_title).grid(column = 4, row = 0, pady = 2)
-        ttk.Label(self.frame, text = "Hand", font = font_title).grid(column = 3, row = 0, pady = 2)
+        ttk.Label(self.frame, text = "Repeat", font = font_title).grid(column = 5, row = 0, pady = 2)
+        ttk.Label(self.frame, text = "Body", font = font_title).grid(column = 3, row = 0, pady = 2)
+        ttk.Label(self.frame, text = "Hand", font = font_title).grid(column = 4, row = 0, pady = 2)
 
         target_json_list = os.listdir(self.path_snapshot)
         target_json_list.sort(reverse = True)
@@ -88,6 +89,9 @@ class Replay:
         self.duration_box_list = [ttk.Entry(self.frame, justify = tkinter.CENTER, font = font_content) for _ in range(self.num_target)]
         self.repeat_box_list = [ttk.Entry(self.frame, justify = tkinter.CENTER, font = font_content) for _ in range(self.num_target)]
 
+        self.enable_body_flag = [tkinter.BooleanVar(value = False) for _ in range(self.num_target)]
+        self.enable_body_list = [ttk.Checkbutton(self.frame, variable = enable_body, onvalue = True, offvalue = False) for enable_body in self.enable_body_flag]
+        
         self.enable_hand_flag = [tkinter.BooleanVar(value = False) for _ in range(self.num_target)]
         self.enable_hand_list = [ttk.Checkbutton(self.frame, variable = enable_hand, onvalue = True, offvalue = False) for enable_hand in self.enable_hand_flag]
         #
@@ -96,8 +100,9 @@ class Replay:
             ttk.Label(self.frame, text = var_i, font = font_content).grid(column = 0, row = var_i + 1, padx = 10)
             self.target_box_list[var_i].grid(column = 1, row = var_i + 1, pady = 10, padx = 10)
             self.duration_box_list[var_i].grid(column = 2, row = var_i + 1, pady = 10, padx = 10)
-            self.repeat_box_list[var_i].grid(column = 4, row = var_i + 1, pady = 10, padx = 10)
-            self.enable_hand_list[var_i].grid(column = 3, row = var_i + 1, pady = 10, padx = 10)
+            self.repeat_box_list[var_i].grid(column = 5, row = var_i + 1, pady = 10, padx = 10)
+            self.enable_body_list[var_i].grid(column = 3, row = var_i + 1, pady = 10, padx = 20)
+            self.enable_hand_list[var_i].grid(column = 4, row = var_i + 1, pady = 10, padx = 20)
 
     #
     ##
@@ -122,17 +127,19 @@ class Replay:
                 with open(self.path_snapshot + "/" + self.target_box_list[var_i].get()) as file:
 
                     targe_dict = json.load(file)
-
+                #
+                if self.enable_body_flag[var_i].get():
+                    
                     target_q = [targe_dict["low_cmd"]["motor_cmd"][motor_i]["q"] for motor_i in range(G1NumBodyJoint)]
-                #
-                if self.duration_box_list[var_i].get() != "":
                     #
-                    duration = float(self.duration_box_list[var_i].get())
-                #
-                else:
-                    duration = self.default_duration
-                #
-                self.forward(target_q, duration)
+                    if self.duration_box_list[var_i].get() != "":
+                        #
+                        duration = float(self.duration_box_list[var_i].get())
+                    #
+                    else:
+                        duration = self.default_duration
+                    #
+                    self.forward(target_q, duration)
                 #
                 if self.enable_hand_flag[var_i].get():
                     #
@@ -188,7 +195,7 @@ class Replay:
                 target_q: list,
                 duration: float):
         
-        if duration < 1.0: duration = 1.0
+        if duration < self.default_duration: duration = self.default_duration
 
         num_step = int(duration / self.control_dt) 
 
