@@ -10,7 +10,7 @@ import threading
 from unitree_sdk2py.core.channel import ChannelFactoryInitialize
 #
 from g1_header import *
-from g1_body import LowStateSubscriber, LowCmdPublisher, LowCmdInit
+from g1_body import LowStateSubscriber, LowCmdPublisher, LowCmdInit, ArmSdkPublisher
 from g1_hand import HandStateSubscriber, HandCmdPublisher, HandCmdInit
 
 #
@@ -41,6 +41,7 @@ class Replay:
         #
         ##
         self.low_cmd_pub = LowCmdPublisher()
+        # self.low_cmd_pub = ArmSdkPublisher()
         self.low_cmd = LowCmdInit(self.low_state_init.mode_machine).low_cmd
         #
         self.hand_cmd_pub = HandCmdPublisher()

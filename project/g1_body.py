@@ -125,3 +125,32 @@ class LowCmdInit:
             self.low_cmd.motor_cmd[var_i].kp = motor_cmd_kp
             self.low_cmd.motor_cmd[var_i].kd = motor_cmd_kd
             self.low_cmd.motor_cmd[var_i].tau = motor_cmd_tau
+
+#
+##
+class ArmSdkPublisher:
+    #
+    ##
+    def __init__(self):
+        #
+        ##
+        self.publisher_armsdk = ChannelPublisher("rt/arm_sdk", LowCmd_)
+        self.publisher_armsdk.Init()
+        #
+        self.crc = CRC()
+
+    #
+    ##
+    def publish(self,
+                low_cmd: LowCmd_):
+        #
+        ##
+        for var_i in range(len(low_cmd.motor_cmd)):
+            #
+            if low_cmd.motor_cmd[var_i].q > ConstPi - 1: low_cmd.motor_cmd[var_i].q = ConstPi - 1
+            if low_cmd.motor_cmd[var_i].q < -ConstPi + 1: low_cmd.motor_cmd[var_i].q = -ConstPi + 1
+        #
+        low_cmd.motor_cmd[G1Body.kNotUsedJoint].q = 1
+        #
+        low_cmd.crc = self.crc.Crc(low_cmd)
+        self.publisher_armsdk.Write(low_cmd)
