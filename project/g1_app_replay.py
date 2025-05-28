@@ -16,6 +16,8 @@ from g1_hand import HandStateSubscriber, HandCmdPublisher, HandCmdInit
 #
 ##
 class Replay:
+    #
+    ##
     def __init__(self,
                  domain,
                  netface,
@@ -237,7 +239,7 @@ class Replay:
         ##
         while True:
             #
-            ## body
+            ##
             if self.flag_ready:
                 #
                 self.low_cmd_pub.publish(self.low_cmd)
@@ -261,6 +263,6 @@ class Replay:
 if __name__ == "__main__":
     #
     ##
-    panel = Replay(0, "eno1")
-    panel.start()
+    replay = Replay(0, "eno1")
+    replay.start()
         
