@@ -83,10 +83,10 @@ class Replay:
         self.button_run.grid(column = 1, row = self.num_target + 2)
         #
         self.button_reset = ttk.Button(self.frame, text = "Reset", command = self.handler_reset)
-        self.button_reset.grid(column = 2, row = self.num_target + 2)
+        self.button_reset.grid(column = 5, row = self.num_target + 2)
         #
         self.button_export = ttk.Button(self.frame, text = "Export", command = self.handler_export)
-        self.button_export.grid(column = 5, row = self.num_target + 2)
+        self.button_export.grid(column = 2, row = self.num_target + 2)
         
         ttk.Label(self.frame, text = "Target", font = font_title).grid(column = 1, row = 0, pady = 2)
         ttk.Label(self.frame, text = "Duration (s)", font = font_title).grid(column = 2, row = 0, pady = 2)
@@ -97,6 +97,7 @@ class Replay:
         target_path_list = os.listdir(self.path_snapshot)
         target_path_list.sort(reverse = True)
         target_path_list.insert(0, "hold")
+        target_path_list.insert(0, "")
 
         self.target_box_list = [ttk.Combobox(self.frame, width = 100, values = target_path_list, font = font_content) for _ in range(self.num_target)]
 
@@ -131,7 +132,7 @@ class Replay:
         #
         ##
         target_q = [self.default_set["low_cmd"]["motor_cmd"][motor_i]["q"] for motor_i in range(G1NumBodyJoint)]
-        self.forward_body(target_q, 2)
+        self.forward_body(target_q, 2.0)
         #
         ##
         hand_l_target_q = [0.5 for _ in range(G1NumHandJoint)]
@@ -190,6 +191,15 @@ class Replay:
         with open(self.path_snapshot + "/" + var_time + ".jsonscript", "w", encoding = "utf-8") as file:
             #
             json.dump(export_dict, file, indent = 4)
+
+        target_path_list = os.listdir(self.path_snapshot)
+        target_path_list.sort(reverse = True)
+        target_path_list.insert(0, "hold")
+
+        for target_box in self.target_box_list:
+
+            target_box["values"] = target_path_list
+
         #
         print("Export", var_time)
 
@@ -255,7 +265,7 @@ class Replay:
         #
         ##
         target_list, flag_body_list, flag_hand_list, duration_list, repeat_list = self.extract_panel()
-
+        # print(target_list, flag_body_list, flag_hand_list, duration_list, repeat_list)
         self.run(target_list, flag_body_list, flag_hand_list, duration_list, repeat_list)
     
     #
