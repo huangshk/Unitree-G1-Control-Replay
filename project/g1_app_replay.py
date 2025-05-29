@@ -119,6 +119,19 @@ class Replay:
 
     #
     ##
+    def extract_panel(self):
+        #
+        ##
+        target_list = [target_box.get() for target_box in self.target_box_list]
+        flag_body_list = [enable_body.get() for enable_body in self.enable_body_bool]
+        flag_hand_list = [enable_hand.get() for enable_hand in self.enable_hand_bool]
+        duration_list = [duration_box.get() for duration_box in self.duration_box_list]
+        repeat_list = [repeat_box.get() for repeat_box in self.repeat_box_list]
+        #
+        return target_list, flag_body_list, flag_hand_list, duration_list, repeat_list
+
+    #
+    ##
     def handler_reset(self):
         #
         ##
@@ -143,8 +156,8 @@ class Replay:
         #
         ##
         if not self.flag_reset:
+            #
             thread_run = threading.Thread(target = self.worker_run)
-            # self.flag_run = True
             thread_run.start()
 
     #
@@ -156,6 +169,30 @@ class Replay:
             #
             thread_export = threading.Thread(target = self.worker_export)
             thread_export.start()
+
+    #
+    ##
+    def worker_control(self):
+        #
+        ##
+        while True:
+            #
+            ##
+            if self.flag_ready:
+                #
+                self.low_cmd_pub.publish(self.low_cmd)
+                self.hand_cmd_pub.publish_l(self.hand_l_cmd)
+                self.hand_cmd_pub.publish_r(self.hand_r_cmd)
+            #
+            time.sleep(self.control_dt)
+
+    #
+    ##
+    def worker_run(self):
+        #
+        ##
+        target_list, flag_body_list, flag_hand_list, duration_list, repeat_list = self.extract_panel()
+        self.run(target_list, flag_body_list, flag_hand_list, duration_list, repeat_list)
         
     #
     ##
@@ -189,27 +226,6 @@ class Replay:
 
         #
         print("Export", var_time)
-
-    #
-    ##
-    def worker_run(self):
-        #
-        ##
-        target_list, flag_body_list, flag_hand_list, duration_list, repeat_list = self.extract_panel()
-        self.run(target_list, flag_body_list, flag_hand_list, duration_list, repeat_list)
-    
-    #
-    ##
-    def extract_panel(self):
-        #
-        ##
-        target_list = [target_box.get() for target_box in self.target_box_list]
-        flag_body_list = [enable_body.get() for enable_body in self.enable_body_bool]
-        flag_hand_list = [enable_hand.get() for enable_hand in self.enable_hand_bool]
-        duration_list = [duration_box.get() for duration_box in self.duration_box_list]
-        repeat_list = [repeat_box.get() for repeat_box in self.repeat_box_list]
-        #
-        return target_list, flag_body_list, flag_hand_list, duration_list, repeat_list
 
     #
     ##
@@ -332,21 +348,7 @@ class Replay:
             #
             self.hand_r_cmd.cmds[var_i].q = hand_r_target_q[var_i]
 
-    #
-    ##
-    def worker_control(self):
-        #
-        ##
-        while True:
-            #
-            ##
-            if self.flag_ready:
-                #
-                self.low_cmd_pub.publish(self.low_cmd)
-                self.hand_cmd_pub.publish_l(self.hand_l_cmd)
-                self.hand_cmd_pub.publish_r(self.hand_r_cmd)
-            #
-            time.sleep(self.control_dt)
+    
 
     #
     ##

@@ -80,8 +80,9 @@ class Tuner:
         self.frame_0.grid()
         self.frame_1.grid()
         #
-        font_title = ("Arial", 16, "bold")
+        # font_title = ("Arial", 16, "bold")
         font_content = ("Arial", 12, "bold")
+        self.panel.option_add('*TCombobox*Listbox.font', font_content)
 
         file_list = os.listdir(self.path_snapshot)
         target_json_list = [target_json for target_json in file_list if target_json.split(".")[-1] == "json"]
@@ -90,8 +91,8 @@ class Tuner:
         self.target_box = ttk.Combobox(self.frame_0, width = 100, values = target_json_list, font = font_content)
         self.target_box.grid(row = 0, column = 0, padx = 10)
 
-        self.button_load = ttk.Button(self.frame_0, text = "Load", command = self.handler_load)
-        self.button_load.grid(row = 0, column = 1, padx = 10)
+        self.button_run = ttk.Button(self.frame_0, text = "Run", command = self.handler_run)
+        self.button_run.grid(row = 0, column = 1, padx = 10)
         self.button_snapshot = ttk.Button(self.frame_0, text = "Snapshot", command = self.handler_snapshot)
         self.button_snapshot.grid(row = 0, column = 2, padx = 10)
         self.button_reset = ttk.Button(self.frame_0, text = "Reset", command = self.handler_reset)
@@ -160,13 +161,13 @@ class Tuner:
 
     #
     ##
-    def handler_load(self):
+    def handler_run(self):
         #
         ##
         if not self.flag_reset:
             #
-            thread_load = threading.Thread(target = self.worker_load)
-            thread_load.start()
+            thread_run = threading.Thread(target = self.worker_run)
+            thread_run.start()
 
     #
     ##
@@ -206,7 +207,7 @@ class Tuner:
 
     #
     ##
-    def worker_load(self):
+    def worker_run(self):
         #
         ##
         if self.target_box.get().split(".")[-1] == "json":
