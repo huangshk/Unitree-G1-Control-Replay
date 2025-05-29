@@ -2,10 +2,11 @@
 ##
 import os
 import time
+import datetime
 import json
+import threading
 import tkinter
 from tkinter import ttk
-import threading
 #
 from unitree_sdk2py.core.channel import ChannelFactoryInitialize
 #
@@ -24,6 +25,7 @@ class Replay:
                  control_dt = 0.005,
                  num_target = 10,
                  default_duration = 0.5,
+                 enable_arm_sdk = False,
                  path_snapshot = "snapshot",
                  path_default = "snapshot/default.json"):
         #
@@ -31,10 +33,15 @@ class Replay:
         self.control_dt = control_dt
         self.num_target = num_target
         self.default_duration = default_duration
+        self.enable_arm_sdk = enable_arm_sdk
         self.path_snapshot = path_snapshot
         with open(path_default) as default_file:
             self.default_set = json.load(default_file)
         #
+        ##
+        self.init_panel()
+        #
+        ##
         ChannelFactoryInitialize(domain, netface)
         #
         self.low_state_sub = LowStateSubscriber()
@@ -42,19 +49,21 @@ class Replay:
         self.low_state_init = self.low_state_sub.low_state
         #
         ##
-        self.low_cmd_pub = LowCmdPublisher()
-        # self.low_cmd_pub = ArmSdkPublisher()
+        if enable_arm_sdk:  self.low_cmd_pub = ArmSdkPublisher()
+        else:               self.low_cmd_pub = LowCmdPublisher()
+        #
         self.low_cmd = LowCmdInit(self.low_state_init.mode_machine).low_cmd
         #
         self.hand_cmd_pub = HandCmdPublisher()
         self.hand_l_cmd = HandCmdInit().hand_cmd
         self.hand_r_cmd = HandCmdInit().hand_cmd
         #
-        self.init_panel()
-        self.flag_ready = False
-        self.flag_run = False
+        self.thread_control = threading.Thread(target = self.worker_control)
         #
-        self.thread_control = threading.Thread(target = self.control_thread)
+        self.flag_ready = False
+        # self.flag_run = False
+
+        self.flag_reset = False
 
     #
     ##
@@ -75,6 +84,9 @@ class Replay:
         #
         self.button_reset = ttk.Button(self.frame, text = "Reset", command = self.handler_reset)
         self.button_reset.grid(column = 2, row = self.num_target + 2)
+        #
+        self.button_export = ttk.Button(self.frame, text = "Export", command = self.handler_export)
+        self.button_export.grid(column = 5, row = self.num_target + 2)
         
         ttk.Label(self.frame, text = "Target", font = font_title).grid(column = 1, row = 0, pady = 2)
         ttk.Label(self.frame, text = "Duration (s)", font = font_title).grid(column = 2, row = 0, pady = 2)
@@ -82,20 +94,20 @@ class Replay:
         ttk.Label(self.frame, text = "Body", font = font_title).grid(column = 3, row = 0, pady = 2)
         ttk.Label(self.frame, text = "Hand", font = font_title).grid(column = 4, row = 0, pady = 2)
 
-        target_json_list = os.listdir(self.path_snapshot)
-        target_json_list.sort(reverse = True)
-        target_json_list.insert(0, "hold")
+        target_path_list = os.listdir(self.path_snapshot)
+        target_path_list.sort(reverse = True)
+        target_path_list.insert(0, "hold")
 
-        self.target_box_list = [ttk.Combobox(self.frame, width = 100, values = target_json_list, font = font_content) for _ in range(self.num_target)]
+        self.target_box_list = [ttk.Combobox(self.frame, width = 100, values = target_path_list, font = font_content) for _ in range(self.num_target)]
 
         self.duration_box_list = [ttk.Entry(self.frame, justify = tkinter.CENTER, font = font_content) for _ in range(self.num_target)]
         self.repeat_box_list = [ttk.Entry(self.frame, justify = tkinter.CENTER, font = font_content) for _ in range(self.num_target)]
 
-        self.enable_body_flag = [tkinter.BooleanVar(value = False) for _ in range(self.num_target)]
-        self.enable_body_list = [ttk.Checkbutton(self.frame, variable = enable_body, onvalue = True, offvalue = False) for enable_body in self.enable_body_flag]
+        self.enable_body_bool = [tkinter.BooleanVar(value = False) for _ in range(self.num_target)]
+        self.enable_body_list = [ttk.Checkbutton(self.frame, variable = enable_body, onvalue = True, offvalue = False) for enable_body in self.enable_body_bool]
         
-        self.enable_hand_flag = [tkinter.BooleanVar(value = False) for _ in range(self.num_target)]
-        self.enable_hand_list = [ttk.Checkbutton(self.frame, variable = enable_hand, onvalue = True, offvalue = False) for enable_hand in self.enable_hand_flag]
+        self.enable_hand_bool = [tkinter.BooleanVar(value = False) for _ in range(self.num_target)]
+        self.enable_hand_list = [ttk.Checkbutton(self.frame, variable = enable_hand, onvalue = True, offvalue = False) for enable_hand in self.enable_hand_bool]
         #
         for var_i in range(self.num_target):
             #
@@ -108,104 +120,251 @@ class Replay:
 
     #
     ##
-    def handler_run(self):
-        #
-        ##
-        thread_run = threading.Thread(target = self.run_thread)
-        self.flag_run = True
-        thread_run.start()
-
-    #
-    ##
-    def run_thread(self):
-        #
-        ##
-        var_i = 0
-        #
-        while var_i < self.num_target:
-            #
-            if self.target_box_list[var_i].get().split(".")[-1] == "json":
-                #
-                with open(self.path_snapshot + "/" + self.target_box_list[var_i].get()) as file:
-
-                    targe_dict = json.load(file)
-                #
-                if self.enable_body_flag[var_i].get():
-                    
-                    target_q = [targe_dict["low_cmd"]["motor_cmd"][motor_i]["q"] for motor_i in range(G1NumBodyJoint)]
-                    #
-                    if self.duration_box_list[var_i].get() != "":
-                        #
-                        duration = float(self.duration_box_list[var_i].get())
-                    #
-                    else:
-                        duration = self.default_duration
-                    #
-                    self.forward(target_q, duration)
-                #
-                if self.enable_hand_flag[var_i].get():
-                    #
-                    hand_l_target_q = [targe_dict["hand_l_cmd"]["cmds"][motor_i]["q"] for motor_i in range(G1NumHandJoint)]
-                    hand_r_target_q = [targe_dict["hand_r_cmd"]["cmds"][motor_i]["q"] for motor_i in range(G1NumHandJoint)]
-                    self.hand(hand_l_target_q, hand_r_target_q)
-            #
-            elif self.target_box_list[var_i].get() == "hold":
-                #
-                if self.duration_box_list[var_i].get() != "":
-                    #
-                    time.sleep(float(self.duration_box_list[var_i].get()))
-                else:
-                    #
-                    time.sleep(self.default_duration)
-            #
-            ##
-            if self.repeat_box_list[var_i].get() != "" and int(self.repeat_box_list[var_i].get()) < self.num_target:
-
-                var_i = int(self.repeat_box_list[var_i].get())
-            #
-            else:
-                #
-                var_i = var_i + 1
-            #
-            ##
-            if not self.flag_run: break
-
-    #
-    ##
     def handler_reset(self):
         #
         ##
-        self.button_run["state"] = tkinter.DISABLED
+        # self.button_run["state"] = tkinter.DISABLED
         #
-        self.flag_run = False
-
+        # self.flag_run = False
+        self.flag_reset = True
         time.sleep(0.5)
         #
+        ##
         target_q = [self.default_set["low_cmd"]["motor_cmd"][motor_i]["q"] for motor_i in range(G1NumBodyJoint)]
+        self.forward_body(target_q, 2)
         #
-        self.forward(target_q, 2)
-
+        ##
         hand_l_target_q = [0.5 for _ in range(G1NumHandJoint)]
         hand_r_target_q = [0.5 for _ in range(G1NumHandJoint)]
-        self.hand(hand_l_target_q, hand_r_target_q)
+        self.forward_hand(hand_l_target_q, hand_r_target_q)
         #
-        self.button_run["state"] = tkinter.NORMAL
+        # self.button_run["state"] = tkinter.NORMAL
+        #
+        ##
+        self.flag_reset = False
 
     #
     ##
-    def forward(self,
-                target_q: list,
-                duration: float):
+    def handler_run(self):
+        #
+        ##
+        if not self.flag_reset:
+            thread_run = threading.Thread(target = self.worker_run)
+            # self.flag_run = True
+            thread_run.start()
+
+    #
+    ##
+    def handler_export(self):
+        #
+        ##
+        if not self.flag_reset:
+            #
+            thread_export = threading.Thread(target = self.worker_export)
+            thread_export.start()
         
+    #
+    ##
+    def worker_export(self):
+        #
+        ##
+        var_time = str(datetime.datetime.now()).replace("-", "_").replace(" ", "_").replace(".", "_").replace(":", "_")
+        #
+        ##
+        target_list, flag_body_list, flag_hand_list, duration_list, repeat_list = self.extract_panel()
+        #
+        export_dict = {
+            "target_list": target_list,
+            "flag_body_list": flag_body_list,
+            "flag_hand_list": flag_hand_list,
+            "duration_list": duration_list,
+            "repeat_list": repeat_list,
+        }
+        #
+        # export_dict["target_list"] = [target_box.get() for target_box in self.target_box_list]
+        # export_dict["flag_body_list"] = [enable_body.get() for enable_body in self.enable_body_bool]
+        # export_dict["flag_hand_list"] = [enable_hand.get() for enable_hand in self.enable_hand_bool]
+        # export_dict["duration_list"] = [duration_box.get() for duration_box in self.duration_box_list]
+        # export_dict["repeat_list"] = [repeat_box.get() for repeat_box in self.repeat_box_list]
+        #
+        with open(self.path_snapshot + "/" + var_time + ".jsonscript", "w", encoding = "utf-8") as file:
+            #
+            json.dump(export_dict, file, indent = 4)
+        #
+        print("Export", var_time)
+
+    #
+    ##
+    # def worker_run_(self):
+    #     #
+    #     ##
+    #     var_i = 0
+    #     #
+    #     while var_i < self.num_target:
+    #         #
+    #         if self.target_box_list[var_i].get().split(".")[-1] == "json":
+    #             #
+    #             with open(self.path_snapshot + "/" + self.target_box_list[var_i].get()) as file:
+
+    #                 target_dict = json.load(file)
+    #             #
+    #             if self.enable_body_bool[var_i].get():
+                    
+    #                 target_q = [target_dict["low_cmd"]["motor_cmd"][motor_i]["q"] for motor_i in range(G1NumBodyJoint)]
+    #                 #
+    #                 if self.duration_box_list[var_i].get() != "":
+    #                     #
+    #                     duration = float(self.duration_box_list[var_i].get())
+    #                 #
+    #                 else:
+    #                     duration = self.default_duration
+    #                 #
+    #                 self.forward_body(target_q, duration)
+    #             #
+    #             if self.enable_hand_bool[var_i].get():
+    #                 #
+    #                 hand_l_target_q = [target_dict["hand_l_cmd"]["cmds"][motor_i]["q"] for motor_i in range(G1NumHandJoint)]
+    #                 hand_r_target_q = [target_dict["hand_r_cmd"]["cmds"][motor_i]["q"] for motor_i in range(G1NumHandJoint)]
+    #                 self.forward_hand(hand_l_target_q, hand_r_target_q)
+    #         #
+    #         elif self.target_box_list[var_i].get() == "hold":
+    #             #
+    #             if self.duration_box_list[var_i].get() != "":
+    #                 #
+    #                 time.sleep(float(self.duration_box_list[var_i].get()))
+    #             else:
+    #                 #
+    #                 time.sleep(self.default_duration)
+    #         #
+    #         ##
+    #         if self.repeat_box_list[var_i].get() != "" and int(self.repeat_box_list[var_i].get()) < self.num_target:
+
+    #             var_i = int(self.repeat_box_list[var_i].get())
+    #         #
+    #         else:
+    #             #
+    #             var_i = var_i + 1
+    #         #
+    #         ##
+    #         # if not self.flag_run: break
+    #         if self.flag_reset: break
+
+    #
+    ##
+    def worker_run(self):
+        #
+        ##
+        target_list, flag_body_list, flag_hand_list, duration_list, repeat_list = self.extract_panel()
+
+        self.run(target_list, flag_body_list, flag_hand_list, duration_list, repeat_list)
+    
+    #
+    ##
+    def extract_panel(self):
+        #
+        ##
+        target_list = [target_box.get() for target_box in self.target_box_list]
+        flag_body_list = [enable_body.get() for enable_body in self.enable_body_bool]
+        flag_hand_list = [enable_hand.get() for enable_hand in self.enable_hand_bool]
+        duration_list = [duration_box.get() for duration_box in self.duration_box_list]
+        repeat_list = [repeat_box.get() for repeat_box in self.repeat_box_list]
+        #
+        return target_list, flag_body_list, flag_hand_list, duration_list, repeat_list
+
+    #
+    ##
+    def run(self,
+            target_list: list,
+            flag_body_list: list,
+            flag_hand_list: list,
+            duration_list: list,
+            repeat_list: list,
+            flag_body_parent = True,
+            flag_hand_parent = True):
+        '''
+        flag_body_parent for recursive calls
+        flag_hand_parent for recursive calls
+        '''
+        #
+        ##
+        index = 0
+        #
+        while index < len(target_list):
+            #
+            ##
+            if self.flag_reset: break
+            #
+            ##
+            if target_list[index].split(".")[-1] == "json":
+                #
+                ##
+                with open(self.path_snapshot + "/" +  target_list[index]) as file:   target_dict = json.load(file)
+                #
+                ##
+                if flag_body_list[index] and flag_body_parent:
+                    
+                    target_q = [target_dict["low_cmd"]["motor_cmd"][var_i]["q"] for var_i in range(G1NumBodyJoint)]
+
+                    if duration_list[index] != "":  duration = float(duration_list[index])
+                    else:                           duration = self.default_duration
+
+                    self.forward_body(target_q, duration)
+                #
+                ##
+                if flag_hand_list[index] and flag_hand_parent:
+                    #
+                    hand_l_target_q = [target_dict["hand_l_cmd"]["cmds"][var_i]["q"] for var_i in range(G1NumHandJoint)]
+                    hand_r_target_q = [target_dict["hand_r_cmd"]["cmds"][var_i]["q"] for var_i in range(G1NumHandJoint)]
+                    self.forward_hand(hand_l_target_q, hand_r_target_q)
+
+            #   
+            ## recursive calls
+            elif target_list[index].split(".")[-1] == "jsonscript":
+                #
+                ##
+                with open(self.path_snapshot + "/" + target_list[index]) as file:   script_dict = json.load(file)
+                #
+                self.run(target_list = script_dict["target_list"], 
+                         flag_body_list = script_dict["flag_body_list"], 
+                         flag_hand_list = script_dict["flag_hand_list"], 
+                         duration_list = script_dict["duration_list"],
+                         repeat_list = script_dict["repeat_list"],
+                         flag_body_parent = flag_body_list[index],
+                         flag_hand_parent = flag_hand_list[index])
+                
+            #
+            ##
+            elif target_list[index] == "hold":
+                #
+                if duration_list[index] != "":  time.sleep(float(duration_list[index]))
+                else:                           time.sleep(self.default_duration)
+            
+            #
+            ##
+            if repeat_list[index] != "" and int(repeat_list[index]) < len(target_list):     index = int(repeat_list[index])
+            #
+            else:       index = index + 1
+
+    #
+    ##
+    def forward_body(self,
+                     target_q: list,
+                     duration: float):
+        #
+        ##
         if duration < self.default_duration: duration = self.default_duration
-
+        #
         num_step = int(duration / self.control_dt) 
-
+        #
+        ##
         if self.flag_ready:
-            source_q = [self.low_cmd.motor_cmd[motor_i].q for motor_i in range(G1NumBodyJoint)]
+            #
+            source_q = [self.low_cmd.motor_cmd[var_i].q for var_i in range(G1NumBodyJoint)]
+        #
         else:
-            source_q = [self.low_state_sub.low_state.motor_state[motor_i].q for motor_i in range(G1NumBodyJoint)]
+            source_q = [self.low_state_sub.low_state.motor_state[var_i].q for var_i in range(G1NumBodyJoint)]
         # 
+        ##
         for var_t in range(num_step):
             #
             for var_i in range(G1NumBodyJoint):
@@ -213,6 +372,7 @@ class Replay:
                 self.low_cmd.motor_cmd[var_i].q = source_q[var_i] + (target_q[var_i] - source_q[var_i]) / num_step * (var_t + 1)
 
             self.flag_ready = True
+
             time.sleep(self.control_dt)
         #
         for var_i in range(G1NumBodyJoint):
@@ -221,7 +381,7 @@ class Replay:
 
     #
     ##
-    def hand(self,
+    def forward_hand(self,
              hand_l_target_q,
              hand_r_target_q):
         #
@@ -234,7 +394,7 @@ class Replay:
 
     #
     ##
-    def control_thread(self):
+    def worker_control(self):
         #
         ##
         while True:
@@ -260,9 +420,9 @@ class Replay:
 
 #
 ##
-if __name__ == "__main__":
+if __name__ == "__main__":#
     #
     ##
-    replay = Replay(0, "eno1")
-    replay.start()
+    app_replay = Replay(0, "eno1")
+    app_replay.start()
         

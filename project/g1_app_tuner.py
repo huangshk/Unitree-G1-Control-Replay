@@ -1,15 +1,15 @@
 #
 ##
 import os
-import time, datetime
+import time
+import datetime
 import json
 import threading
-
 import tkinter
 from tkinter import ttk
-
+#
 from unitree_sdk2py.core.channel import ChannelFactoryInitialize
-
+#
 from g1_header import *
 from g1_body import LowStateSubscriber, LowCmdPublisher, LowCmdInit
 from g1_hand import HandStateSubscriber, HandCmdPublisher, HandCmdInit
@@ -157,7 +157,7 @@ class Tuner:
         #
         ##
         self.flag_reset = False
-        
+
     #
     ##
     def handler_load(self):
@@ -190,6 +190,22 @@ class Tuner:
 
     #
     ##
+    def worker_control(self):
+        #
+        ##
+        while True:
+            #
+            ##
+            if self.flag_ready:
+                #
+                self.low_cmd_pub.publish(self.low_cmd)
+                self.hand_cmd_pub.publish_l(self.hand_l_cmd)
+                self.hand_cmd_pub.publish_r(self.hand_r_cmd)
+            #
+            time.sleep(self.control_dt)
+
+    #
+    ##
     def worker_load(self):
         #
         ##
@@ -197,19 +213,19 @@ class Tuner:
             #
             with open(self.path_snapshot + "/" + self.target_box.get()) as file:
 
-                targe_dict = json.load(file)
+                target_dict = json.load(file)
             #
             ##
-            target_q = [targe_dict["low_cmd"]["motor_cmd"][var_i]["q"] for var_i in range(G1NumBodyJoint)]
+            target_q = [target_dict["low_cmd"]["motor_cmd"][var_i]["q"] for var_i in range(G1NumBodyJoint)]
             self.forward_body(target_q, self.default_duration)
             #
-            hand_l_target_q = [targe_dict["hand_l_cmd"]["cmds"][var_i]["q"] for var_i in range(G1NumHandJoint)]
-            hand_r_target_q = [targe_dict["hand_r_cmd"]["cmds"][var_i]["q"] for var_i in range(G1NumHandJoint)]
+            hand_l_target_q = [target_dict["hand_l_cmd"]["cmds"][var_i]["q"] for var_i in range(G1NumHandJoint)]
+            hand_r_target_q = [target_dict["hand_r_cmd"]["cmds"][var_i]["q"] for var_i in range(G1NumHandJoint)]
             self.forward_hand(hand_l_target_q, hand_r_target_q)
             #
             ##
             for var_i in range(G1NumBodyJoint):
-                self.low_cmd_init.motor_cmd[var_i].q = targe_dict["low_cmd"]["motor_cmd"][var_i]["q"]
+                self.low_cmd_init.motor_cmd[var_i].q = target_dict["low_cmd"]["motor_cmd"][var_i]["q"]
             #
             for var_i in range(G1NumHandJoint):
                 self.hand_l_cmd_init.cmds[var_i].q = hand_l_target_q[var_i]
@@ -326,22 +342,7 @@ class Tuner:
             #
             self.hand_r_cmd.cmds[var_i].q = hand_r_target_q[var_i]
 
-    #
-    ##
-    def worker_control(self):
-        #
-        ##
-        while True:
-            #
-            ##
-            if self.flag_ready:
-                #
-                self.low_cmd_pub.publish(self.low_cmd)
-                self.hand_cmd_pub.publish_l(self.hand_l_cmd)
-                self.hand_cmd_pub.publish_r(self.hand_r_cmd)
-            #
-            time.sleep(self.control_dt)
-
+    
     #
     ##
     def start(self):
@@ -351,10 +352,11 @@ class Tuner:
         self.handler_reset()
         self.panel.mainloop()
 
+
 #
 ##
 if __name__ == "__main__":
     #
     ##
-    tuner = Tuner(0, "eno1")
-    tuner.start()
+    app_tuner = Tuner(0, "eno1")
+    app_tuner.start()
