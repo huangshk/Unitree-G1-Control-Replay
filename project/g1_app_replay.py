@@ -61,8 +61,6 @@ class Replay:
         self.thread_control = threading.Thread(target = self.worker_control)
         #
         self.flag_ready = False
-        # self.flag_run = False
-
         self.flag_reset = False
 
     #
@@ -124,9 +122,6 @@ class Replay:
     def handler_reset(self):
         #
         ##
-        # self.button_run["state"] = tkinter.DISABLED
-        #
-        # self.flag_run = False
         self.flag_reset = True
         time.sleep(0.5)
         #
@@ -138,8 +133,6 @@ class Replay:
         hand_l_target_q = [0.5 for _ in range(G1NumHandJoint)]
         hand_r_target_q = [0.5 for _ in range(G1NumHandJoint)]
         self.forward_hand(hand_l_target_q, hand_r_target_q)
-        #
-        # self.button_run["state"] = tkinter.NORMAL
         #
         ##
         self.flag_reset = False
@@ -182,12 +175,6 @@ class Replay:
             "repeat_list": repeat_list,
         }
         #
-        # export_dict["target_list"] = [target_box.get() for target_box in self.target_box_list]
-        # export_dict["flag_body_list"] = [enable_body.get() for enable_body in self.enable_body_bool]
-        # export_dict["flag_hand_list"] = [enable_hand.get() for enable_hand in self.enable_hand_bool]
-        # export_dict["duration_list"] = [duration_box.get() for duration_box in self.duration_box_list]
-        # export_dict["repeat_list"] = [repeat_box.get() for repeat_box in self.repeat_box_list]
-        #
         with open(self.path_snapshot + "/" + var_time + ".jsonscript", "w", encoding = "utf-8") as file:
             #
             json.dump(export_dict, file, indent = 4)
@@ -205,67 +192,10 @@ class Replay:
 
     #
     ##
-    # def worker_run_(self):
-    #     #
-    #     ##
-    #     var_i = 0
-    #     #
-    #     while var_i < self.num_target:
-    #         #
-    #         if self.target_box_list[var_i].get().split(".")[-1] == "json":
-    #             #
-    #             with open(self.path_snapshot + "/" + self.target_box_list[var_i].get()) as file:
-
-    #                 target_dict = json.load(file)
-    #             #
-    #             if self.enable_body_bool[var_i].get():
-                    
-    #                 target_q = [target_dict["low_cmd"]["motor_cmd"][motor_i]["q"] for motor_i in range(G1NumBodyJoint)]
-    #                 #
-    #                 if self.duration_box_list[var_i].get() != "":
-    #                     #
-    #                     duration = float(self.duration_box_list[var_i].get())
-    #                 #
-    #                 else:
-    #                     duration = self.default_duration
-    #                 #
-    #                 self.forward_body(target_q, duration)
-    #             #
-    #             if self.enable_hand_bool[var_i].get():
-    #                 #
-    #                 hand_l_target_q = [target_dict["hand_l_cmd"]["cmds"][motor_i]["q"] for motor_i in range(G1NumHandJoint)]
-    #                 hand_r_target_q = [target_dict["hand_r_cmd"]["cmds"][motor_i]["q"] for motor_i in range(G1NumHandJoint)]
-    #                 self.forward_hand(hand_l_target_q, hand_r_target_q)
-    #         #
-    #         elif self.target_box_list[var_i].get() == "hold":
-    #             #
-    #             if self.duration_box_list[var_i].get() != "":
-    #                 #
-    #                 time.sleep(float(self.duration_box_list[var_i].get()))
-    #             else:
-    #                 #
-    #                 time.sleep(self.default_duration)
-    #         #
-    #         ##
-    #         if self.repeat_box_list[var_i].get() != "" and int(self.repeat_box_list[var_i].get()) < self.num_target:
-
-    #             var_i = int(self.repeat_box_list[var_i].get())
-    #         #
-    #         else:
-    #             #
-    #             var_i = var_i + 1
-    #         #
-    #         ##
-    #         # if not self.flag_run: break
-    #         if self.flag_reset: break
-
-    #
-    ##
     def worker_run(self):
         #
         ##
         target_list, flag_body_list, flag_hand_list, duration_list, repeat_list = self.extract_panel()
-        # print(target_list, flag_body_list, flag_hand_list, duration_list, repeat_list)
         self.run(target_list, flag_body_list, flag_hand_list, duration_list, repeat_list)
     
     #
@@ -430,7 +360,7 @@ class Replay:
 
 #
 ##
-if __name__ == "__main__":#
+if __name__ == "__main__":
     #
     ##
     app_replay = Replay(0, "eno1")
