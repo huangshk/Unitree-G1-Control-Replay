@@ -1,3 +1,5 @@
+#
+##
 import os
 import time, datetime
 import json
@@ -47,6 +49,7 @@ class Tuner:
         #
         self.low_state_sub = LowStateSubscriber()
         self.hand_state_sub = HandStateSubscriber()
+        time.sleep(0.1)
         self.low_state_init = self.low_state_sub.low_state
         #
         self.low_cmd_pub = LowCmdPublisher()
@@ -60,7 +63,7 @@ class Tuner:
         self.hand_r_cmd_init = HandCmdInit().hand_cmd
         #
         ##
-        self.thread_control = threading.Thread(target = self.control_thread)
+        self.thread_control = threading.Thread(target = self.worker_control)
         #
         self.flag_ready = False
         self.flag_reset = False
@@ -162,7 +165,7 @@ class Tuner:
         ##
         if not self.flag_reset:
             #
-            thread_load = threading.Thread(target = self.load_thread)
+            thread_load = threading.Thread(target = self.worker_load)
             thread_load.start()
 
     #
@@ -172,7 +175,7 @@ class Tuner:
         ##
         if not self.flag_reset:
             #
-            thread_snapshot = threading.Thread(target = self.snapshot_thread)
+            thread_snapshot = threading.Thread(target = self.worker_snapshot)
             thread_snapshot.start()
 
     #
@@ -182,12 +185,12 @@ class Tuner:
         ##
         if not self.flag_reset:
             #
-            thread_spinbox = threading.Thread(target = self.spinbox_thread)
+            thread_spinbox = threading.Thread(target = self.worker_spinbox)
             thread_spinbox.start()
 
     #
     ##
-    def load_thread(self):
+    def worker_load(self):
         #
         ##
         if self.target_box.get().split(".")[-1] == "json":
@@ -200,23 +203,23 @@ class Tuner:
             target_q = [targe_dict["low_cmd"]["motor_cmd"][var_i]["q"] for var_i in range(G1NumBodyJoint)]
             self.forward_body(target_q, self.default_duration)
             #
-            #
-            for var_i in range(G1NumBodyJoint):
-                self.low_cmd_init.motor_cmd[var_i].q = targe_dict["low_cmd"]["motor_cmd"][var_i]["q"]
-            #
-            ##
-            hand_l_target_q = [targe_dict["hand_l_cmd"]["cmds"][motor_i]["q"] for motor_i in range(G1NumHandJoint)]
-            hand_r_target_q = [targe_dict["hand_r_cmd"]["cmds"][motor_i]["q"] for motor_i in range(G1NumHandJoint)]
+            hand_l_target_q = [targe_dict["hand_l_cmd"]["cmds"][var_i]["q"] for var_i in range(G1NumHandJoint)]
+            hand_r_target_q = [targe_dict["hand_r_cmd"]["cmds"][var_i]["q"] for var_i in range(G1NumHandJoint)]
             self.forward_hand(hand_l_target_q, hand_r_target_q)
             #
             ##
+            for var_i in range(G1NumBodyJoint):
+                self.low_cmd_init.motor_cmd[var_i].q = targe_dict["low_cmd"]["motor_cmd"][var_i]["q"]
+            #
             for var_i in range(G1NumHandJoint):
                 self.hand_l_cmd_init.cmds[var_i].q = hand_l_target_q[var_i]
                 self.hand_r_cmd_init.cmds[var_i].q = hand_r_target_q[var_i]
+            #
+            for spinbox in self.spinbox_dict.values():  spinbox.set(0)
 
     #
     ##
-    def snapshot_thread(self):
+    def worker_snapshot(self):
         #
         ##
         var_time = str(datetime.datetime.now()).replace("-", "_").replace(" ", "_").replace(".", "_").replace(":", "_")
@@ -233,15 +236,21 @@ class Tuner:
         snapshot["hand_l_cmd"] = self.hand_cmd_pub.to_dict(self.hand_l_cmd)
         snapshot["hand_r_cmd"] = self.hand_cmd_pub.to_dict(self.hand_r_cmd)
         #
-        with open(var_time + ".json", "w", encoding = "utf-8") as file:
+        with open(self.path_snapshot + "/" + var_time + ".json", "w", encoding = "utf-8") as file:
             #
             json.dump(snapshot, file, indent = 4)
+        #
+        ##
+        file_list = os.listdir(self.path_snapshot)
+        target_json_list = [target_json for target_json in file_list if target_json.split(".")[-1] == "json"]
+        target_json_list.sort(reverse = True)
+        self.target_box["values"] = target_json_list
         #
         print("Snapshot", var_time)
 
     #
     ##
-    def spinbox_thread(self):
+    def worker_spinbox(self):
         #
         ##
         for var_i, motor_id in enumerate(self.body_motors):
@@ -319,7 +328,7 @@ class Tuner:
 
     #
     ##
-    def control_thread(self):
+    def worker_control(self):
         #
         ##
         while True:

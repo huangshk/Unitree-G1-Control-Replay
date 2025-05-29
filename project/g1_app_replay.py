@@ -21,9 +21,9 @@ class Replay:
     def __init__(self,
                  domain,
                  netface,
-                 control_dt = 0.01,
+                 control_dt = 0.005,
                  num_target = 10,
-                 default_duration = 1,
+                 default_duration = 0.5,
                  path_snapshot = "snapshot",
                  path_default = "snapshot/default.json"):
         #
