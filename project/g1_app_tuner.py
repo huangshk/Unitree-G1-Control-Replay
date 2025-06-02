@@ -3,6 +3,7 @@
 import os
 import time
 import datetime
+import copy
 import json
 import threading
 import tkinter
@@ -85,7 +86,7 @@ class Tuner:
         self.panel.option_add('*TCombobox*Listbox.font', font_content)
 
         file_list = os.listdir(self.path_snapshot)
-        target_json_list = [target_json for target_json in file_list if target_json.split(".")[-1] == "json"]
+        target_json_list = [target_json for target_json in file_list if target_json.split(".")[-1] in ["json", "jsonscript"]]
         target_json_list.sort(reverse = True)
 
         self.target_box = ttk.Combobox(self.frame_0, width = 100, values = target_json_list, font = font_content)
@@ -210,30 +211,48 @@ class Tuner:
     def worker_run(self):
         #
         ##
-        if self.target_box.get().split(".")[-1] == "json":
-            #
-            with open(self.path_snapshot + "/" + self.target_box.get()) as file:
+        # if self.target_box.get().split(".")[-1] == "json":
+        #     #
+        #     with open(self.path_snapshot + "/" + self.target_box.get()) as file:
 
-                target_dict = json.load(file)
-            #
-            ##
-            target_q = [target_dict["low_cmd"]["motor_cmd"][var_i]["q"] for var_i in range(G1NumBodyJoint)]
-            self.forward_body(target_q, self.default_duration)
-            #
-            hand_l_target_q = [target_dict["hand_l_cmd"]["cmds"][var_i]["q"] for var_i in range(G1NumHandJoint)]
-            hand_r_target_q = [target_dict["hand_r_cmd"]["cmds"][var_i]["q"] for var_i in range(G1NumHandJoint)]
-            self.forward_hand(hand_l_target_q, hand_r_target_q)
-            #
-            ##
-            for var_i in range(G1NumBodyJoint):
-                self.low_cmd_init.motor_cmd[var_i].q = target_dict["low_cmd"]["motor_cmd"][var_i]["q"]
-            #
-            for var_i in range(G1NumHandJoint):
-                self.hand_l_cmd_init.cmds[var_i].q = hand_l_target_q[var_i]
-                self.hand_r_cmd_init.cmds[var_i].q = hand_r_target_q[var_i]
-            #
-            for spinbox in self.spinbox_dict.values():  spinbox.set(0)
+        #         target_dict = json.load(file)
+        #     #
+        #     ##
+        #     target_q = [target_dict["low_cmd"]["motor_cmd"][var_i]["q"] for var_i in range(G1NumBodyJoint)]
+        #     self.forward_body(target_q, self.default_duration)
+        #     #
+        #     hand_l_target_q = [target_dict["hand_l_cmd"]["cmds"][var_i]["q"] for var_i in range(G1NumHandJoint)]
+        #     hand_r_target_q = [target_dict["hand_r_cmd"]["cmds"][var_i]["q"] for var_i in range(G1NumHandJoint)]
+        #     self.forward_hand(hand_l_target_q, hand_r_target_q)
+        #     #
+        #     ##
+        #     for var_i in range(G1NumBodyJoint):
+        #         self.low_cmd_init.motor_cmd[var_i].q = target_dict["low_cmd"]["motor_cmd"][var_i]["q"]
+        #     #
+        #     for var_i in range(G1NumHandJoint):
+        #         self.hand_l_cmd_init.cmds[var_i].q = hand_l_target_q[var_i]
+        #         self.hand_r_cmd_init.cmds[var_i].q = hand_r_target_q[var_i]
+        #     #
+        #     for spinbox in self.spinbox_dict.values():  spinbox.set(0)
 
+        self.run_target_list(target_list = [self.target_box.get()],
+                             flag_body_list = [True],
+                             flag_hand_list = [True],
+                             duration_list = [self.default_duration],
+                             repeat_list = [""],
+                             flag_body_parent = True,
+                             flag_hand_parent = True)
+        #
+        ##
+        for var_i in range(G1NumBodyJoint):
+            self.low_cmd_init.motor_cmd[var_i].q = copy.deepcopy(self.low_cmd.motor_cmd[var_i].q)
+        #
+        for var_i in range(G1NumHandJoint):
+            self.hand_l_cmd_init.cmds[var_i].q = copy.deepcopy(self.hand_l_cmd.cmds[var_i].q)
+            self.hand_r_cmd_init.cmds[var_i].q = copy.deepcopy(self.hand_r_cmd.cmds[var_i].q)
+        #
+        for spinbox in self.spinbox_dict.values():  spinbox.set(0)
+        
     #
     ##
     def worker_snapshot(self):
@@ -295,6 +314,95 @@ class Tuner:
             hand_r_q = self.hand_r_cmd_init.cmds[var_i].q + (update_hand_r / self.control_range) / 2
 
             self.hand_r_cmd.cmds[var_i].q = hand_r_q
+
+    #
+    ##
+    def run_target_dict(self,
+                        target_dict,
+                        duration,
+                        flag_body,
+                        flag_hand):
+        #
+        ##
+        if flag_body:
+            #
+            target_q = [target_dict["low_cmd"]["motor_cmd"][var_i]["q"] for var_i in range(G1NumBodyJoint)]
+            self.forward_body(target_q, duration)
+        #
+        ##
+        if flag_hand:
+            #
+            hand_l_target_q = [target_dict["hand_l_cmd"]["cmds"][var_i]["q"] for var_i in range(G1NumHandJoint)]
+            hand_r_target_q = [target_dict["hand_r_cmd"]["cmds"][var_i]["q"] for var_i in range(G1NumHandJoint)]
+            self.forward_hand(hand_l_target_q, hand_r_target_q)
+
+    #
+    ##
+    def run_target_list(self,
+                        target_list,
+                        flag_body_list: list,
+                        flag_hand_list: list,
+                        duration_list: list,
+                        repeat_list: list,
+                        flag_body_parent = True,
+                        flag_hand_parent = True):
+        '''
+        flag_body_parent for recursive calls
+        flag_hand_parent for recursive calls
+        '''
+        #
+        ##
+        index = 0
+        #
+        while index < len(target_list):
+            #
+            ##
+            if self.flag_reset: break
+            #
+            ##
+            if target_list[index].split(".")[-1] == "json":
+                #
+                print(target_list[index])
+                #
+                with open(self.path_snapshot + "/" +  target_list[index]) as file:   
+                    target_dict = json.load(file)
+                #
+                if duration_list[index] != "":  duration = float(duration_list[index])
+                else:                           duration = self.default_duration
+                #
+                self.run_target_dict(target_dict,
+                                     duration,
+                                     flag_body = flag_body_list[index] and flag_body_parent,
+                                     flag_hand = flag_hand_list[index] and flag_hand_parent)
+            #   
+            ## recursive calls
+            elif target_list[index].split(".")[-1] == "jsonscript":
+                #
+                with open(self.path_snapshot + "/" + target_list[index]) as file:   
+                    script_dict = json.load(file)
+                #
+                self.run_target_list(target_list = script_dict["target_list"], 
+                                     flag_body_list = script_dict["flag_body_list"], 
+                                     flag_hand_list = script_dict["flag_hand_list"], 
+                                     duration_list = script_dict["duration_list"],
+                                     repeat_list = script_dict["repeat_list"],
+                                     flag_body_parent = flag_body_list[index] and flag_body_parent,
+                                     flag_hand_parent = flag_hand_list[index] and flag_hand_parent)
+            #
+            ##
+            elif target_list[index] == "hold":
+                #
+                if duration_list[index] != "":  time.sleep(float(duration_list[index]))
+                else:                           time.sleep(self.default_duration)
+
+            #
+            ##
+            if repeat_list[index] != "":
+                if int(repeat_list[index]) >= 0 and int(repeat_list[index]) < len(target_list):     
+                    index = int(repeat_list[index])
+            #
+            else:
+                index = index + 1
 
     #
     ##

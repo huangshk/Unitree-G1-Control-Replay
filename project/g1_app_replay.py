@@ -227,79 +227,79 @@ class Replay:
         #
         print("Export", var_time)
 
-    #
-    ##
-    def run(self,
-            target_list: list,
-            flag_body_list: list,
-            flag_hand_list: list,
-            duration_list: list,
-            repeat_list: list,
-            flag_body_parent = True,
-            flag_hand_parent = True):
-        '''
-        flag_body_parent for recursive calls
-        flag_hand_parent for recursive calls
-        '''
-        #
-        ##
-        index = 0
-        #
-        while index < len(target_list):
-            #
-            ##
-            if self.flag_reset: break
-            #
-            ##
-            if target_list[index].split(".")[-1] == "json":
-                #
-                ##
-                with open(self.path_snapshot + "/" +  target_list[index]) as file:   target_dict = json.load(file)
-                #
-                ##
-                if flag_body_list[index] and flag_body_parent:
+    # #
+    # ##
+    # def run(self,
+    #         target_list: list,
+    #         flag_body_list: list,
+    #         flag_hand_list: list,
+    #         duration_list: list,
+    #         repeat_list: list,
+    #         flag_body_parent = True,
+    #         flag_hand_parent = True):
+    #     '''
+    #     flag_body_parent for recursive calls
+    #     flag_hand_parent for recursive calls
+    #     '''
+    #     #
+    #     ##
+    #     index = 0
+    #     #
+    #     while index < len(target_list):
+    #         #
+    #         ##
+    #         if self.flag_reset: break
+    #         #
+    #         ##
+    #         if target_list[index].split(".")[-1] == "json":
+    #             #
+    #             ##
+    #             with open(self.path_snapshot + "/" +  target_list[index]) as file:   target_dict = json.load(file)
+    #             #
+    #             ##
+    #             if flag_body_list[index] and flag_body_parent:
                     
-                    target_q = [target_dict["low_cmd"]["motor_cmd"][var_i]["q"] for var_i in range(G1NumBodyJoint)]
+    #                 target_q = [target_dict["low_cmd"]["motor_cmd"][var_i]["q"] for var_i in range(G1NumBodyJoint)]
 
-                    if duration_list[index] != "":  duration = float(duration_list[index])
-                    else:                           duration = self.default_duration
+    #                 if duration_list[index] != "":  duration = float(duration_list[index])
+    #                 else:                           duration = self.default_duration
 
-                    self.forward_body(target_q, duration)
-                #
-                ##
-                if flag_hand_list[index] and flag_hand_parent:
-                    #
-                    hand_l_target_q = [target_dict["hand_l_cmd"]["cmds"][var_i]["q"] for var_i in range(G1NumHandJoint)]
-                    hand_r_target_q = [target_dict["hand_r_cmd"]["cmds"][var_i]["q"] for var_i in range(G1NumHandJoint)]
-                    self.forward_hand(hand_l_target_q, hand_r_target_q)
+    #                 self.forward_body(target_q, duration)
+    #             #
+    #             ##
+    #             if flag_hand_list[index] and flag_hand_parent:
+    #                 #
+    #                 hand_l_target_q = [target_dict["hand_l_cmd"]["cmds"][var_i]["q"] for var_i in range(G1NumHandJoint)]
+    #                 hand_r_target_q = [target_dict["hand_r_cmd"]["cmds"][var_i]["q"] for var_i in range(G1NumHandJoint)]
+    #                 self.forward_hand(hand_l_target_q, hand_r_target_q)
 
-            #   
-            ## recursive calls
-            elif target_list[index].split(".")[-1] == "jsonscript":
-                #
-                ##
-                with open(self.path_snapshot + "/" + target_list[index]) as file:   script_dict = json.load(file)
-                #
-                self.run(target_list = script_dict["target_list"], 
-                         flag_body_list = script_dict["flag_body_list"], 
-                         flag_hand_list = script_dict["flag_hand_list"], 
-                         duration_list = script_dict["duration_list"],
-                         repeat_list = script_dict["repeat_list"],
-                         flag_body_parent = flag_body_list[index] and flag_body_parent,
-                         flag_hand_parent = flag_hand_list[index] and flag_hand_parent)
+    #         #   
+    #         ## recursive calls
+    #         elif target_list[index].split(".")[-1] == "jsonscript":
+    #             #
+    #             ##
+    #             with open(self.path_snapshot + "/" + target_list[index]) as file:   script_dict = json.load(file)
+    #             #
+    #             self.run(target_list = script_dict["target_list"], 
+    #                      flag_body_list = script_dict["flag_body_list"], 
+    #                      flag_hand_list = script_dict["flag_hand_list"], 
+    #                      duration_list = script_dict["duration_list"],
+    #                      repeat_list = script_dict["repeat_list"],
+    #                      flag_body_parent = flag_body_list[index] and flag_body_parent,
+    #                      flag_hand_parent = flag_hand_list[index] and flag_hand_parent)
                 
-            #
-            ##
-            elif target_list[index] == "hold":
-                #
-                if duration_list[index] != "":  time.sleep(float(duration_list[index]))
-                else:                           time.sleep(self.default_duration)
+    #         #
+    #         ##
+    #         elif target_list[index] == "hold":
+    #             #
+    #             if duration_list[index] != "":  time.sleep(float(duration_list[index]))
+    #             else:                           time.sleep(self.default_duration)
             
-            #
-            ##
-            if repeat_list[index] != "" and int(repeat_list[index]) < len(target_list):     index = int(repeat_list[index])
-            #
-            else:       index = index + 1
+    #         #
+    #         ##
+    #         if repeat_list[index] != "" and int(repeat_list[index]) < len(target_list):     index = int(repeat_list[index])
+    #         #
+    #         else:       index = index + 1
 
     #
     ##
