@@ -68,6 +68,7 @@ class Tuner:
         #
         self.flag_ready = False
         self.flag_reset = False
+        self.flag_next = False
 
     #
     ##
@@ -89,15 +90,23 @@ class Tuner:
         target_json_list = [target_json for target_json in file_list if target_json.split(".")[-1] in ["json", "jsonscript"]]
         target_json_list.sort(reverse = True)
 
-        self.target_box = ttk.Combobox(self.frame_0, width = 100, values = target_json_list, font = font_content)
+        self.target_box = ttk.Combobox(self.frame_0, width = 90, values = target_json_list, font = font_content)
         self.target_box.grid(row = 0, column = 0, padx = 10)
 
+        self.enable_debug = tkinter.BooleanVar(value = False)
+        ttk.Checkbutton(self.frame_0, text = "Debug", variable = self.enable_debug, onvalue = True, offvalue = False).grid(row = 0, column = 1, padx = 10)
+
         self.button_run = ttk.Button(self.frame_0, text = "Run", command = self.handler_run)
-        self.button_run.grid(row = 0, column = 1, padx = 10)
+        self.button_run.grid(row = 0, column = 2, padx = 10)
+
+        self.button_run = ttk.Button(self.frame_0, text = "Next", command = self.handler_next)
+        self.button_run.grid(row = 0, column = 3, padx = 10)
+
         self.button_snapshot = ttk.Button(self.frame_0, text = "Snapshot", command = self.handler_snapshot)
-        self.button_snapshot.grid(row = 0, column = 2, padx = 10)
+        self.button_snapshot.grid(row = 0, column = 4, padx = 10)
+
         self.button_reset = ttk.Button(self.frame_0, text = "Reset", command = self.handler_reset)
-        self.button_reset.grid(row = 0, column = 3, padx = 10)
+        self.button_reset.grid(row = 0, column = 5, padx = 10)
 
         self.spinbox_dict = {}
         row_per_column = [6, 6, 3, 7, 7, 6, 6]
@@ -169,6 +178,15 @@ class Tuner:
             #
             thread_run = threading.Thread(target = self.worker_run)
             thread_run.start()
+            #
+            for spinbox in self.spinbox_dict.values():  spinbox.set(0)
+
+    #
+    ##
+    def handler_next(self):
+        #
+        ##
+        self.flag_next = True
 
     #
     ##
@@ -211,30 +229,6 @@ class Tuner:
     def worker_run(self):
         #
         ##
-        # if self.target_box.get().split(".")[-1] == "json":
-        #     #
-        #     with open(self.path_snapshot + "/" + self.target_box.get()) as file:
-
-        #         target_dict = json.load(file)
-        #     #
-        #     ##
-        #     target_q = [target_dict["low_cmd"]["motor_cmd"][var_i]["q"] for var_i in range(G1NumBodyJoint)]
-        #     self.forward_body(target_q, self.default_duration)
-        #     #
-        #     hand_l_target_q = [target_dict["hand_l_cmd"]["cmds"][var_i]["q"] for var_i in range(G1NumHandJoint)]
-        #     hand_r_target_q = [target_dict["hand_r_cmd"]["cmds"][var_i]["q"] for var_i in range(G1NumHandJoint)]
-        #     self.forward_hand(hand_l_target_q, hand_r_target_q)
-        #     #
-        #     ##
-        #     for var_i in range(G1NumBodyJoint):
-        #         self.low_cmd_init.motor_cmd[var_i].q = target_dict["low_cmd"]["motor_cmd"][var_i]["q"]
-        #     #
-        #     for var_i in range(G1NumHandJoint):
-        #         self.hand_l_cmd_init.cmds[var_i].q = hand_l_target_q[var_i]
-        #         self.hand_r_cmd_init.cmds[var_i].q = hand_r_target_q[var_i]
-        #     #
-        #     for spinbox in self.spinbox_dict.values():  spinbox.set(0)
-
         self.run_target_list(target_list = [self.target_box.get()],
                              flag_body_list = [True],
                              flag_hand_list = [True],
@@ -242,16 +236,6 @@ class Tuner:
                              repeat_list = [""],
                              flag_body_parent = True,
                              flag_hand_parent = True)
-        #
-        ##
-        for var_i in range(G1NumBodyJoint):
-            self.low_cmd_init.motor_cmd[var_i].q = copy.deepcopy(self.low_cmd.motor_cmd[var_i].q)
-        #
-        for var_i in range(G1NumHandJoint):
-            self.hand_l_cmd_init.cmds[var_i].q = copy.deepcopy(self.hand_l_cmd.cmds[var_i].q)
-            self.hand_r_cmd_init.cmds[var_i].q = copy.deepcopy(self.hand_r_cmd.cmds[var_i].q)
-        #
-        for spinbox in self.spinbox_dict.values():  spinbox.set(0)
         
     #
     ##
@@ -335,6 +319,14 @@ class Tuner:
             hand_l_target_q = [target_dict["hand_l_cmd"]["cmds"][var_i]["q"] for var_i in range(G1NumHandJoint)]
             hand_r_target_q = [target_dict["hand_r_cmd"]["cmds"][var_i]["q"] for var_i in range(G1NumHandJoint)]
             self.forward_hand(hand_l_target_q, hand_r_target_q)
+        #
+        ##
+        for var_i in range(G1NumBodyJoint):
+            self.low_cmd_init.motor_cmd[var_i].q = copy.deepcopy(self.low_cmd.motor_cmd[var_i].q)
+        #
+        for var_i in range(G1NumHandJoint):
+            self.hand_l_cmd_init.cmds[var_i].q = copy.deepcopy(self.hand_l_cmd.cmds[var_i].q)
+            self.hand_r_cmd_init.cmds[var_i].q = copy.deepcopy(self.hand_r_cmd.cmds[var_i].q)
 
     #
     ##
@@ -360,8 +352,12 @@ class Tuner:
             if self.flag_reset: break
             #
             ##
+            if self.enable_debug.get() and (not self.flag_next): continue
+            #
+            ##
             if target_list[index].split(".")[-1] == "json":
                 #
+                self.flag_next = False
                 print(target_list[index])
                 #
                 with open(self.path_snapshot + "/" +  target_list[index]) as file:   
