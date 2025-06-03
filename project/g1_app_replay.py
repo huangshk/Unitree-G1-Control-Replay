@@ -92,12 +92,15 @@ class Replay:
         ttk.Label(self.frame, text = "Body", font = font_title).grid(column = 3, row = 0, pady = 2)
         ttk.Label(self.frame, text = "Hand", font = font_title).grid(column = 4, row = 0, pady = 2)
 
-        target_path_list = os.listdir(self.path_snapshot)
-        target_path_list.sort(reverse = True)
-        target_path_list.insert(0, "hold")
-        target_path_list.insert(0, "")
+        target_path_list = []
+        # target_path_list = os.listdir(self.path_snapshot)
+        # target_path_list.sort(reverse = True)
+        # target_path_list.insert(0, "hold")
+        # target_path_list.insert(0, "")
 
-        self.target_box_list = [ttk.Combobox(self.frame, width = 100, values = target_path_list, font = font_content) for _ in range(self.num_target)]
+        self.target_box_list = [ttk.Combobox(self.frame, width = 80, values = target_path_list, font = font_content) for _ in range(self.num_target)]
+
+        self.refresh_target_list()
 
         self.duration_box_list = [ttk.Entry(self.frame, justify = tkinter.CENTER, font = font_content) for _ in range(self.num_target)]
         self.repeat_box_list = [ttk.Entry(self.frame, justify = tkinter.CENTER, font = font_content) for _ in range(self.num_target)]
@@ -129,6 +132,20 @@ class Replay:
         repeat_list = [repeat_box.get() for repeat_box in self.repeat_box_list]
         #
         return target_list, flag_body_list, flag_hand_list, duration_list, repeat_list
+    
+    #
+    ##
+    def refresh_target_list(self):
+        #
+        ##
+        target_path_list = os.listdir(self.path_snapshot)
+        target_path_list.sort(reverse = True)
+        target_path_list.insert(0, "hold")
+        target_path_list.insert(0, "")
+
+        for target_box in self.target_box_list:
+
+            target_box["values"] = target_path_list
 
     #
     ##
@@ -146,6 +163,8 @@ class Replay:
         hand_l_target_q = [0.5 for _ in range(G1NumHandJoint)]
         hand_r_target_q = [0.5 for _ in range(G1NumHandJoint)]
         self.forward_hand(hand_l_target_q, hand_r_target_q)
+        #
+        self.refresh_target_list()
         #
         ##
         self.flag_reset = False
@@ -216,13 +235,14 @@ class Replay:
             #
             json.dump(export_dict, file, indent = 4)
 
-        target_path_list = os.listdir(self.path_snapshot)
-        target_path_list.sort(reverse = True)
-        target_path_list.insert(0, "hold")
+        self.refresh_target_list()
+        # target_path_list = os.listdir(self.path_snapshot)
+        # target_path_list.sort(reverse = True)
+        # target_path_list.insert(0, "hold")
 
-        for target_box in self.target_box_list:
+        # for target_box in self.target_box_list:
 
-            target_box["values"] = target_path_list
+        #     target_box["values"] = target_path_list
 
         #
         print("Export", var_time)
@@ -347,6 +367,7 @@ class Replay:
         for var_i in range(G1NumBodyJoint):
 
             self.low_cmd.motor_cmd[var_i].q = target_q[var_i]
+            time.sleep(self.control_dt)
 
     #
     ##

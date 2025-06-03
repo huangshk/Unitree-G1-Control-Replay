@@ -262,7 +262,7 @@ class Tuner:
         #
         ##
         file_list = os.listdir(self.path_snapshot)
-        target_json_list = [target_json for target_json in file_list if target_json.split(".")[-1] == "json"]
+        target_json_list = [target_json for target_json in file_list if target_json.split(".")[-1] in ["json", "jsonscript"]]
         target_json_list.sort(reverse = True)
         self.target_box["values"] = target_json_list
         #
