@@ -186,7 +186,7 @@ class RemoteSubscriber:
         self.data.Btn_R2 = bool(data_remote[2] & 16)
         self.data.Btn_L2 = bool(data_remote[2] & 32)
         self.data.Btn_F1 = bool(data_remote[2] & 64)
-        self.data.Btn_F3 = bool(data_remote[2] & 64)
+        self.data.Btn_F3 = bool(data_remote[2] & 128)
 
         #
         ##
@@ -197,7 +197,7 @@ class RemoteSubscriber:
         self.data.Btn_Up = bool(data_remote[3] & 16)
         self.data.Btn_Right = bool(data_remote[3] & 32)
         self.data.Btn_Down = bool(data_remote[3] & 64)
-        self.data.Btn_Left = bool(data_remote[3] & 64)
+        self.data.Btn_Left = bool(data_remote[3] & 128)
 
         #
         ##
@@ -205,18 +205,3 @@ class RemoteSubscriber:
         self.data.Rocker_L.Y = struct.unpack('<f', data_remote[20:24])[0]
         self.data.Rocker_R.X = struct.unpack('<f', data_remote[8:12])[0]
         self.data.Rocker_R.Y = struct.unpack('<f', data_remote[12:16])[0]
-
-        # while True:
-        #     try:
-        #         data_remote = self.low_state_sub.low_state.wireless_remote
-        #         print("R1", bool(data_remote[2] & 1), "L1", bool(data_remote[2] & 2))
-
-        #         # print(data_remote, struct.unpack('<f', data_remote[4:8])[0], struct.unpack('<f', data_remote[8:12]), struct.unpack('<f', data_remote[12:16]), struct.unpack('<f', data_remote[20:24]))
-        #     except:
-        #         pass
-        #     time.sleep(0.5)
-
-        
-
-
-        # return self.data_remote

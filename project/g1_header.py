@@ -114,5 +114,3 @@ class G1Remote:
     class Rocker_R:
         X = 0.0     # Byte 8, 9, 10, 11
         Y = 0.0     # Byte 12, 13, 14, 15
-
-# print(len([motor_id for (motor_id, _) in G1Joint.__dict__.items() if motor_id[0] != "_"]))
