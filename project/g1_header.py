@@ -77,4 +77,42 @@ class G1Hand:
         ThumbBend = 4
         ThumbRotate = 5
 
+#
+##
+class G1Remote:
+    #
+    ## 8 Bits in Byte 2
+    Btn_R1 = False      # 0b00000001 1
+    Btn_L1 = False      # 0b00000010 2
+    Btn_Start = False   # 0b00000100 4
+    Btn_Select = False  # 0b00001000 8
+    Btn_R2 = False      # 0b00010000 16
+    Btn_L2 = False      # 0b00100000 32
+    Btn_F1 = False      # 0b01000000 64
+    Btn_F3 = False      # 0b10000000 128
+
+    #
+    ## 8 Bits in Byte 3
+    Btn_A = False       # 0b00000001 1
+    Btn_B = False       # 0b00000010 2
+    Btn_X = False       # 0b00000100 4
+    Btn_Y = False       # 0b00001000 8
+    Btn_Up = False      # 0b00010000 16
+    Btn_Right = False   # 0b00100000 32
+    Btn_Down = False    # 0b01000000 64
+    Btn_Left = False    # 0b10000000 128
+
+    #
+    ##
+    class Rocker_L:
+        #
+        X = 0.0     # Byte 4, 5, 6, 7
+        Y = 0.0     # Byte 20, 21, 22, 23
+    
+    #
+    ##
+    class Rocker_R:
+        X = 0.0     # Byte 8, 9, 10, 11
+        Y = 0.0     # Byte 12, 13, 14, 15
+
 # print(len([motor_id for (motor_id, _) in G1Joint.__dict__.items() if motor_id[0] != "_"]))
