@@ -51,10 +51,11 @@ class Demo:
         self.hand_l_cmd = HandCmdInit().hand_cmd
         self.hand_r_cmd = HandCmdInit().hand_cmd
         #
-        self.init_event()
+        # self.init_event()
+        self.script_to_run = None
         #
         self.thread_control = threading.Thread(target = self.worker_control)
-        self.thread_event = threading.Thread(target = self.worker_event)
+        # self.thread_event = threading.Thread(target = self.worker_event)
         #
         self.flag_ready = False
         self.flag_reset = False
@@ -62,10 +63,10 @@ class Demo:
 
     #
     ##
-    def init_event(self):
+    def check_event(self):
         #
         ##
-        self.event_dict = {
+        event_dict = {
             #
             ## script: trigger
             "reset": [self.remote_sub.data.Btn_Down, self.remote_sub.data.Btn_A],
@@ -73,7 +74,7 @@ class Demo:
             
         }
         #
-        self.script_to_run = None
+        return event_dict
 
     #
     ##
@@ -97,25 +98,33 @@ class Demo:
 
     #
     ##
-    def worker_event(self):
+    def worker_main(self):
         #
         ##
         while True:
             #
             ##
-            for script in self.event_dict.keys():
+            event_dict = self.check_event()
+            #
+            for script in event_dict.keys():
                 #
-                if all(self.event_dict[script]) and (self.script_to_run is None):
+                if all(event_dict[script]):
                     #
                     time.sleep(0.5)
                     #
-                    if all(self.event_dict[script]) and (self.script_to_run is None):
+                    if all(event_dict[script]):
                         #
-                        self.script_to_run = script
+                        print("Event", script)
                         #
-                        print(self.script_to_run)
-                        # thread_run = threading.Thread(target = self.worker_run)
-                        # thread_run.start()
+                        if script == "reset":
+                            #
+                            self.handler_reset()
+                        #
+                        elif self.script_to_run is None:
+
+                            self.script_to_run = script
+                            thread_run = threading.Thread(target = self.worker_run)
+                            thread_run.start()
                         #
                         break
             #
@@ -140,6 +149,7 @@ class Demo:
         #
         ##
         self.script_to_run = None
+        print("end")
 
     #
     ##
@@ -300,9 +310,10 @@ class Demo:
         ##
         self.thread_control.start()
         self.handler_reset()
-        self.thread_event.start()
-        while True:
-            time.sleep(self.control_dt)
+        # self.thread_event.start()
+        self.worker_main()
+        # while True:
+        #     time.sleep(self.control_dt)
 
 #
 ##
