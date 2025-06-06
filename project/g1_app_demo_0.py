@@ -136,7 +136,9 @@ class Demo:
         #
         ##
         if self.script_to_run is not None:
+            #
             with open(self.path_snapshot + "/" + self.script_to_run) as file:   
+                #
                 script_dict = json.load(file)
                 #
                 self.run_target_list(target_list = script_dict["target_list"], 
@@ -148,8 +150,8 @@ class Demo:
                                      flag_hand_parent = True)
         #
         ##
+        print("End", self.script_to_run)
         self.script_to_run = None
-        print("end")
 
     #
     ##
