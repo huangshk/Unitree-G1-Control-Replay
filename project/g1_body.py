@@ -1,6 +1,7 @@
 #
 ##
 import copy
+import struct
 #
 from unitree_sdk2py.core.channel import ChannelSubscriber
 from unitree_sdk2py.idl.unitree_hg.msg.dds_ import LowState_
@@ -155,8 +156,6 @@ class ArmSdkPublisher:
         low_cmd.crc = self.crc.Crc(low_cmd)
         self.publisher_armsdk.Write(low_cmd)
 
-import time
-import struct
 #
 ##
 class RemoteSubscriber:
