@@ -12,6 +12,7 @@ from unitree_sdk2py.core.channel import ChannelFactoryInitialize
 from g1_header import *
 from g1_body import LowStateSubscriber, LowCmdInit, ArmSdkPublisher, RemoteSubscriber
 from g1_hand import HandCmdPublisher, HandCmdInit
+from g1_audio import AudioPlayer
 
 #
 ##
@@ -51,15 +52,17 @@ class Demo:
         self.hand_l_cmd = HandCmdInit().hand_cmd
         self.hand_r_cmd = HandCmdInit().hand_cmd
         #
+        ##
+        self.audio_player = AudioPlayer()
+        #
         # self.init_event()
         self.script_to_run = None
+        self.audio_to_play = None
         #
         self.thread_control = threading.Thread(target = self.worker_control)
-        # self.thread_event = threading.Thread(target = self.worker_event)
         #
         self.flag_ready = False
         self.flag_reset = False
-        # self.flag_run = False
 
     #
     ##
@@ -70,8 +73,11 @@ class Demo:
             #
             ## script: trigger
             "reset": [self.remote_sub.data.Btn_Down, self.remote_sub.data.Btn_A],
-            "2025_06_03_18_39_31_407775.jsonscript": [self.remote_sub.data.Btn_Up, self.remote_sub.data.Btn_Y],
+            "2025_06_03_18_39_31_407775.jsonscript": [self.remote_sub.data.Btn_Up, self.remote_sub.data.Btn_Y], # screw
             
+            #
+            ##
+            "audio/imperial_best.wav": [self.remote_sub.data.Btn_Up, self.remote_sub.data.Btn_B],
         }
         #
         return event_dict
@@ -120,11 +126,19 @@ class Demo:
                             #
                             self.handler_reset()
                         #
-                        elif self.script_to_run is None:
+                        else:
 
-                            self.script_to_run = script
-                            thread_run = threading.Thread(target = self.worker_run)
-                            thread_run.start()
+                            if (self.script_to_run is None) and script.split(".")[-1] == "jsonscript":
+
+                                self.script_to_run = script
+                                thread_run = threading.Thread(target = self.worker_run)
+                                thread_run.start()
+
+                            if (self.audio_to_play is None) and script.split(".")[-1] == "wav":
+                                #
+                                self.audio_to_play = script
+                                thread_audio = threading.Thread(target = self.worker_audio)
+                                thread_audio.start()
                         #
                         break
             #
@@ -152,6 +166,20 @@ class Demo:
         ##
         print("End", self.script_to_run)
         self.script_to_run = None
+
+    #
+    ##
+    def worker_audio(self):
+        #
+        ##
+        if self.audio_to_play is not None:
+            
+            self.audio_player.play(self.audio_to_play)
+
+        #
+        ##
+        print("End", self.audio_to_play)
+        self.audio_to_play = None
 
     #
     ##
@@ -312,10 +340,7 @@ class Demo:
         ##
         self.thread_control.start()
         self.handler_reset()
-        # self.thread_event.start()
         self.worker_main()
-        # while True:
-        #     time.sleep(self.control_dt)
 
 #
 ##

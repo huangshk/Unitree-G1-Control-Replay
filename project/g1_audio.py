@@ -69,4 +69,4 @@ class AudioPlayer:
         request = Request(header, parameter, stream_uint8)
         future = self.rpc_client.SendRequest(request, 1.0)
         #
-        print(future.GetResult(1.0))
+        # print(future.GetResult(1.0))
