@@ -100,6 +100,8 @@ class HandCmdPublisher:
             if hand_cmd.cmds[var_i].q > 0.95: hand_cmd.cmds[var_i].q = 0.95
             if hand_cmd.cmds[var_i].q < 0.05: hand_cmd.cmds[var_i].q = 0.05
         #
+        hand_cmd.cmds[5].q = 0.5
+        #
         self.publish_hand_r.Write(hand_cmd)
 
     #

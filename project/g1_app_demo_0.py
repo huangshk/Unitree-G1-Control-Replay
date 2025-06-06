@@ -74,9 +74,9 @@ class Demo:
             ## script: trigger
             "reset": [self.remote_sub.data.Btn_Down, self.remote_sub.data.Btn_A],
             "2025_06_03_18_39_31_407775.jsonscript": [self.remote_sub.data.Btn_Up, self.remote_sub.data.Btn_Y], # screw
-            
+            "2025_06_06_20_41_04_547765.jsonscript": [self.remote_sub.data.Btn_Up, self.remote_sub.data.Btn_A], # wave hand
             #
-            ##
+            ## audio: trigger
             "audio/imperial_best.wav": [self.remote_sub.data.Btn_Up, self.remote_sub.data.Btn_B],
         }
         #
@@ -88,7 +88,7 @@ class Demo:
         #
         ##
         self.flag_reset = True
-        time.sleep(0.5)
+        time.sleep(1.0)
         #
         ##
         target_q = [self.default_set["low_cmd"]["motor_cmd"][motor_i]["q"] for motor_i in range(G1NumBodyJoint)]
@@ -175,7 +175,6 @@ class Demo:
         if self.audio_to_play is not None:
             
             self.audio_player.play(self.audio_to_play)
-
         #
         ##
         print("End", self.audio_to_play)
@@ -311,7 +310,7 @@ class Demo:
                 self.low_cmd.motor_cmd[var_i].q = source_q[var_i] + (target_q[var_i] - source_q[var_i]) / num_step * (var_t + 1)
 
             self.flag_ready = True
-
+            #
             time.sleep(self.control_dt)
         #
         for var_i in range(G1NumBodyJoint):
