@@ -7,6 +7,8 @@ import threading
 #
 ##
 from unitree_sdk2py.core.channel import ChannelFactoryInitialize
+
+from unitree_sdk2py.g1.loco.g1_loco_client import LocoClient
 #
 ##
 from g1_header import *
@@ -40,8 +42,14 @@ class Demo:
         ##
         self.low_state_sub = LowStateSubscriber()
         self.remote_sub = RemoteSubscriber()
-        time.sleep(0.1)
+        #
+        while self.low_state_sub.low_state is None: 
+            print("Waiting...")
+            time.sleep(0.5)
         self.low_state_init = self.low_state_sub.low_state
+        #
+        ##
+        self.init_high_client()
         #
         ##
         self.low_cmd = LowCmdInit(self.low_state_init.mode_machine).low_cmd
@@ -54,6 +62,7 @@ class Demo:
         #
         ##
         self.audio_player = AudioPlayer()
+        self.audio_player.audio_client.LedControl(0, 255, 0)
         #
         # self.init_event()
         self.script_to_run = None
@@ -63,6 +72,30 @@ class Demo:
         #
         self.flag_ready = False
         self.flag_reset = False
+
+    #
+    ##
+    def init_high_client(self):
+        #
+        ##
+        high_client = LocoClient()  
+        high_client.SetTimeout(10.0)
+        #
+        high_client.Init()
+        print("Zero Torque")
+        high_client.ZeroTorque()
+        time.sleep(1)
+        #
+        print("Damp")
+        high_client.Damp()
+        time.sleep(1)
+        #
+        print("Lock Stand")
+        high_client.SetFsmId(4)
+        time.sleep(10)
+        #
+        # print("Main Operation")
+        # high_client.Start()
 
     #
     ##
@@ -346,5 +379,5 @@ class Demo:
 if __name__ == "__main__":
     #
     ##
-    app_demo = Demo(0, "eno1")
+    app_demo = Demo(0, "eth0")
     app_demo.start()
