@@ -45,7 +45,7 @@ class Demo:
         #
         while self.low_state_sub.low_state is None: 
             print("Waiting...")
-            time.sleep(0.5)
+            time.sleep(2)
         self.low_state_init = self.low_state_sub.low_state
         #
         ##
@@ -63,6 +63,7 @@ class Demo:
         ##
         self.audio_player = AudioPlayer()
         self.audio_player.audio_client.LedControl(0, 255, 0)
+        time.sleep(1)
         #
         # self.init_event()
         self.script_to_run = None
