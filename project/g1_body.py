@@ -155,6 +155,19 @@ class ArmSdkPublisher:
         #
         low_cmd.crc = self.crc.Crc(low_cmd)
         self.publisher_armsdk.Write(low_cmd)
+        
+    #
+    ##
+    def to_dict(self,
+                low_cmd: LowCmd_):
+        #
+        ##
+        low_cmd_dict = copy.deepcopy(low_cmd).__dict__
+        #
+        for var_i in range(len(low_cmd_dict["motor_cmd"])):
+            low_cmd_dict["motor_cmd"][var_i] = low_cmd_dict["motor_cmd"][var_i].__dict__
+        #
+        return low_cmd_dict
 
 #
 ##

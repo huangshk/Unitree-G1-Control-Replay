@@ -12,7 +12,7 @@ from tkinter import ttk
 from unitree_sdk2py.core.channel import ChannelFactoryInitialize
 #
 from g1_header import *
-from g1_body import LowStateSubscriber, LowCmdPublisher, LowCmdInit
+from g1_body import LowStateSubscriber, LowCmdPublisher, LowCmdInit, ArmSdkPublisher
 from g1_hand import HandStateSubscriber, HandCmdPublisher, HandCmdInit
 
 #
@@ -26,6 +26,7 @@ class Tuner:
                  control_dt = 0.01,
                  control_range = 100.0,
                  default_duration = 1.0,
+                 enable_arm_sdk = True,
                  path_snapshot = "snapshot",
                  path_default = "snapshot/default.json"):
         #
@@ -53,7 +54,11 @@ class Tuner:
         time.sleep(0.1)
         self.low_state_init = self.low_state_sub.low_state
         #
-        self.low_cmd_pub = LowCmdPublisher()
+        #
+        ##
+        if enable_arm_sdk:  self.low_cmd_pub = ArmSdkPublisher()
+        else:               self.low_cmd_pub = LowCmdPublisher()
+        #
         self.low_cmd = LowCmdInit(self.low_state_init.mode_machine).low_cmd
         self.low_cmd_init = LowCmdInit(self.low_state_init.mode_machine).low_cmd
         #
@@ -99,8 +104,8 @@ class Tuner:
         self.button_run = ttk.Button(self.frame_0, text = "Run", command = self.handler_run)
         self.button_run.grid(row = 0, column = 2, padx = 10)
 
-        self.button_run = ttk.Button(self.frame_0, text = "Next", command = self.handler_next)
-        self.button_run.grid(row = 0, column = 3, padx = 10)
+        self.button_next = ttk.Button(self.frame_0, text = "Next", command = self.handler_next)
+        self.button_next.grid(row = 0, column = 3, padx = 10)
 
         self.button_snapshot = ttk.Button(self.frame_0, text = "Snapshot", command = self.handler_snapshot)
         self.button_snapshot.grid(row = 0, column = 4, padx = 10)
@@ -167,6 +172,8 @@ class Tuner:
             self.hand_r_cmd_init.cmds[var_i].q = 0.5
         #
         ##
+        self.enable_debug.set(False)
+        self.button_next["state"] = tkinter.DISABLED
         self.flag_reset = False
 
     #
@@ -178,6 +185,8 @@ class Tuner:
             #
             thread_run = threading.Thread(target = self.worker_run)
             thread_run.start()
+            #
+            if self.enable_debug.get(): self.button_next["state"] = tkinter.NORMAL
             #
             for spinbox in self.spinbox_dict.values():  spinbox.set(0)
 
@@ -229,6 +238,8 @@ class Tuner:
     def worker_run(self):
         #
         ##
+        print("Start Running")
+        #
         self.run_target_list(target_list = [self.target_box.get()],
                              flag_body_list = [True],
                              flag_hand_list = [True],
@@ -236,6 +247,8 @@ class Tuner:
                              repeat_list = [""],
                              flag_body_parent = True,
                              flag_hand_parent = True)
+        #
+        print("End Running")
         
     #
     ##
@@ -349,7 +362,8 @@ class Tuner:
         while index < len(target_list):
             #
             ##
-            if self.flag_reset: break
+            time.sleep(0.1)
+            if self.flag_reset: return
             #
             ##
             if self.enable_debug.get() and (not self.flag_next): continue

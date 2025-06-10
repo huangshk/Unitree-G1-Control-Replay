@@ -25,7 +25,7 @@ class Replay:
                  control_dt = 0.005,
                  num_target = 10,
                  default_duration = 0.5,
-                 enable_arm_sdk = False,
+                 enable_arm_sdk = True,
                  path_snapshot = "snapshot",
                  path_default = "snapshot/default.json"):
         #

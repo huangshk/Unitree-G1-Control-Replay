@@ -17,8 +17,8 @@ from g1_header import *
 ##
 class HandStateSubscriber:
     '''
-    sudo ./aese_h1_inspire_service/build/inspire_hand -s /dev/ttyUSB1 --namespace hand_r
-    sudo ./aese_h1_inspire_service/build/inspire_hand -s /dev/ttyUSB2 --namespace hand_l
+    nohup sudo ./aese_h1_inspire_service/build/inspire_hand -s /dev/ttyUSB1 --namespace hand_r &
+    nohup sudo ./aese_h1_inspire_service/build/inspire_hand -s /dev/ttyUSB2 --namespace hand_l &
     '''
     #
     ##
@@ -100,7 +100,7 @@ class HandCmdPublisher:
             if hand_cmd.cmds[var_i].q > 0.95: hand_cmd.cmds[var_i].q = 0.95
             if hand_cmd.cmds[var_i].q < 0.05: hand_cmd.cmds[var_i].q = 0.05
         #
-        hand_cmd.cmds[5].q = 0.5
+        hand_cmd.cmds[5].q = 0.3
         #
         self.publish_hand_r.Write(hand_cmd)
 
