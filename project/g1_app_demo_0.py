@@ -49,7 +49,7 @@ class Demo:
         self.low_state_init = self.low_state_sub.low_state
         #
         ##
-        # self.init_high_client()
+        self.init_high_client()
         #
         ##
         self.low_cmd = LowCmdInit(self.low_state_init.mode_machine).low_cmd
@@ -94,8 +94,8 @@ class Demo:
         high_client.SetFsmId(4)
         time.sleep(10)
         #
-        # print("Main Operation")
-        # high_client.Start()
+        print("Main Operation")
+        high_client.Start()
 
     #
     ##
