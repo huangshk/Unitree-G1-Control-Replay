@@ -49,7 +49,7 @@ class Demo:
         self.low_state_init = self.low_state_sub.low_state
         #
         ##
-        self.init_high_client()
+        # self.init_high_client()
         #
         ##
         self.low_cmd = LowCmdInit(self.low_state_init.mode_machine).low_cmd
@@ -62,8 +62,7 @@ class Demo:
         #
         ##
         self.audio_player = AudioPlayer()
-        self.audio_player.audio_client.LedControl(0, 255, 0)
-        time.sleep(1)
+        time.sleep(0.5)
         #
         # self.init_event()
         self.script_to_run = None
@@ -111,7 +110,7 @@ class Demo:
             "2025_06_06_20_41_04_547765.jsonscript": [self.remote_sub.data.Btn_Up, self.remote_sub.data.Btn_A], # wave hand
             #
             ## audio: trigger
-            "audio/imperial_best.wav": [self.remote_sub.data.Btn_Up, self.remote_sub.data.Btn_B],
+            "audio/welcome_imperial.wav": [self.remote_sub.data.Btn_Up, self.remote_sub.data.Btn_B],
         }
         #
         return event_dict
@@ -132,6 +131,9 @@ class Demo:
         hand_l_target_q = [0.5 for _ in range(G1NumHandJoint)]
         hand_r_target_q = [0.5 for _ in range(G1NumHandJoint)]
         self.forward_hand(hand_l_target_q, hand_r_target_q)
+        #
+        ##
+        self.audio_player.play("audio/ready.wav")
         #
         ##
         self.flag_reset = False
