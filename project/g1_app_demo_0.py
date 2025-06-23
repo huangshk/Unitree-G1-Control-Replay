@@ -38,10 +38,13 @@ class Demo:
         #
         ##
         while True:
+            #
             try:
                 ChannelFactoryInitialize(domain, netface)
             except:
                 time.sleep(2)
+            else:
+                break
         #
         ##
         self.low_state_sub = LowStateSubscriber()
