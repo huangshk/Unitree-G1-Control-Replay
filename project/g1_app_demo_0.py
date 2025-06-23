@@ -37,7 +37,11 @@ class Demo:
             self.default_set = json.load(default_file)
         #
         ##
-        ChannelFactoryInitialize(domain, netface)
+        while True:
+            try:
+                ChannelFactoryInitialize(domain, netface)
+            except:
+                time.sleep(2)
         #
         ##
         self.low_state_sub = LowStateSubscriber()
