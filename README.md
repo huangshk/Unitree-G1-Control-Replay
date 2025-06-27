@@ -1,10 +1,10 @@
 # Unitree G1 Robot Control & Replay Platform
 
 This repository provides a platform to run a Unitree G1 robot in 4 steps:
-1. control the degrees of all joints;
-2. snapshot the degrees of all joints;
-3. compose a script including all snapshots;
-4. run the script to replay all joint degrees sequentially.
+1. Control the degrees of all joints;
+2. Snapshot the degrees of all joints;
+3. Compose a script including all snapshots;
+4. Run the script to replay all joint degrees sequentially.
 
 Such a paradigm offers several advantages:
 1. It doesn't involve any kind of learning (_e.g._, reinforcement learning), making it easy for any users without deep learning background to run a humanoid robot.
