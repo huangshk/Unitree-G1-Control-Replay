@@ -14,4 +14,8 @@ Such a paradigm offers several advantages:
 
 **_Overall, this platform enables users to run the Unitree G1 robot for any tasks without knowing complicated robotics stuffs._**
 
-![Demo of Using a Screwdriver](figure/demo_0.gif "Demo of Using a Screwdriver")
+<!---![Demo of Using a Screwdriver](figure/demo_0.gif "Demo of Using a Screwdriver")--->
+
+<p align="center">
+  <img src="figure/demo_0.gif"/>
+</p>
